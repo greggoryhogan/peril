@@ -83,3 +83,13 @@ function start_game() {
 }
 add_action("wp_ajax_start_game", "start_game");
 add_action("wp_ajax_nopriv_start_game", "start_game");
+
+function get_game() {
+    $game_id = absint($_POST['game_id']);
+    wp_send_json(array(
+        'game_content' => get_game_content($game_id),
+        'game_version' => get_game_version($game_id),
+    ));
+}
+add_action("wp_ajax_get_game", "get_game");
+add_action("wp_ajax_nopriv_get_game", "get_game");

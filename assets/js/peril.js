@@ -69,6 +69,18 @@
         e.preventDefault();
         $('#claim-host,#audience-member, #peril-login').remove();
         Cookies.set('peril_audience_member', 1);
+        $.ajax({
+            url: peril.ajax_url,
+            type: 'post',
+            data: {
+                action : 'get_game',
+                game_id : peril.game_id,
+            },
+            success: function(response) {
+                game_version = response.game_version;
+                $('#game-content').html(response.game_content);
+            }
+        });
     });
 
     $(document).on('click','#claim-host',function(e) {

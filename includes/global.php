@@ -118,6 +118,8 @@ function show_started_game($post_id) {
     } 
     if(is_audience_member()) {
         $content .= '<p class="peril-white">You are an audience member, this is audience content.</p>';
+    } else {
+        $content .= '<button id="audience-member" class="peril-button">Join as an audience member</button>';
     }
     
     return $content;
