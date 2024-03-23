@@ -21,6 +21,8 @@ define( 'PERIL_PLUGIN_URL', plugin_dir_url( PERIL_PLUGIN_FILE ));
 
 include_once dirname( PERIL_PLUGIN_FILE ) . '/includes/post-types.php';
 include_once dirname( PERIL_PLUGIN_FILE ) . '/includes/display.php';
+include_once dirname( PERIL_PLUGIN_FILE ) . '/includes/global.php';
+include_once dirname( PERIL_PLUGIN_FILE ) . '/includes/ajax.php';
 
 add_action('wp', 'peril_scripts');
 function peril_scripts() {
@@ -39,6 +41,16 @@ function peril_scripts() {
 		wp_enqueue_style('peril');
 
 		wp_enqueue_style('adobe-fonts', 'https://use.typekit.net/tjd7smh.css', false, $version);
+		wp_enqueue_script('js-cookie', 'https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js', array(), '1.0', true);
+		wp_enqueue_script('peril', PERIL_PLUGIN_URL . 'assets/js/peril.js', array('jquery', 'js-cookie'), $version, true);
+		global $current_user;
+		$game_data = array(
+			'ajax_url' => admin_url( 'admin-ajax.php' ),
+			'user_id' => $current_user->ID,
+			'game_id' => $post->ID,
+			'game_version' => get_game_version($post->ID),
+		);
+		wp_localize_script( 'peril', 'peril', $game_data);
 		
 	}
 }

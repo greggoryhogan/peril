@@ -1,5 +1,21 @@
+$mobile: 767px;
+$blue: #081484;
+$bluer: 8;
+$blueg: 20;
+$blueb: 132;
+$gray: #1c1e2a;
+
+.peril-heading {
+    font-family: "din-2014-narrow", serif;
+    font-weight: 600;
+    font-style: normal;
+    margin: 0;
+    padding: 0;
+    text-transform: uppercase;
+}
+
 .peril-single {
-    background-color: #081484;
+    background-color: $blue;
     padding: 3vw;
     margin: 0;
     position: fixed;
@@ -12,35 +28,133 @@
     flex-direction: column;
     text-transform: uppercase;
     justify-content: center;
-    justify-content: space-around;
+    gap: 4vh;
     align-items: center;
-    
-    font-family: "karmina", serif;
-    font-weight: 700;
+    box-sizing: border-box;
+    font-family: "din-2014-narrow", serif;
+    font-weight: 600;
     font-style: normal;
-    .notice {
+    font-size: 3vw;
+    text-align: center;
+    @media (min-width: $mobile) {
+        p {
+            max-width: 60%;
+        }
+    }
+    @media (max-width: $mobile) {
+        font-size: 36px;
+    }
+    .question-text {
+        font-family: "karmina", serif;
+        font-weight: 700;
+        font-style: normal;
+        text-shadow: 6px 6px 5px #000;
         font-size: 7vw;
         letter-spacing: .1vw;
         line-height: 7vw;;
         text-align: center;
-    }
-    .shadow {
-        text-shadow: 6px 6px 5px #000;
+        margin-bottom: 36px;
+        @media (max-width: $mobile) {
+            font-size: 48px;
+            line-height: 54px;
+        }
     }
     button {
-        color: #1c1e2a;
-        background-color: rgba(255,255,255,1);
-        cursor: pointer;
-        border: none;
-        border-radius: 1vw;
-        font-family: "din-2014-narrow", serif;
-        font-weight: 600;
-        font-style: normal;
-        padding: 30px;
-        text-transform: uppercase;
-        transition: .2s padding;
+        font-size: 36px;
+    }
+}
+
+.peril-button {
+    color: $gray;
+    background-color: rgba(255,255,255,1);
+    cursor: pointer;
+    border: none;
+    border-radius: 1vw;
+    font-family: "din-2014-narrow", serif;
+    font-weight: 600;
+    font-style: normal;
+    padding: 30px;
+    text-transform: uppercase;
+    transition: .2s padding;
+    &:hover {
+        padding: 30px 60px;
+    }
+}
+
+.peril-form-field {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 12px;
+    &:last-of-type {
+        margin-bottom: 0;
+    }
+    input {
+        font-size: inherit;
+        padding: 8px;
+    }
+    button {
+        background: $gray;
+        color: #fff;
+        font-size: inherit;
+        padding: 10px;
+        margin-top: 10px;
         &:hover {
-            padding: 30px 60px;
+            background: $blue;
+            padding: 10px;
         }
+    }
+}
+
+#login-response {
+    text-align: center;
+    max-height: 0;
+    overflow: hidden;
+    transition: .2s max-height;
+    font-size: 24px;
+    line-height: 28px;
+    &.is-active {
+        max-height: 99px;
+    }
+}
+
+.peril-modal {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba($bluer, $blueg, $blueb,1);
+    z-index: -1;
+    opacity: 0;
+    pointer-events: none;
+    transition: .2s opacity;
+    
+    .content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%,-50%);
+        background: #fff;
+        padding: 5%;
+        border-radius: 2vw;
+        color: $gray;
+        font-family: "din-2014-narrow", serif;
+        font-size: 3vw;
+        box-sizing: border-box;
+        h2 {
+            font-size: 6vw;
+        }
+        @media (max-width: $mobile) {
+            width: 90%;
+            font-size: 18px;
+            h2 {
+                font-size: 36px;
+            }
+        }
+    }
+    &.is-active {
+        z-index: 99;
+        opacity: 1;
+        pointer-events: all;
     }
 }
