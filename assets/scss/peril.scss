@@ -36,9 +36,16 @@ $gray: #1c1e2a;
     font-style: normal;
     font-size: 3vw;
     text-align: center;
-    @media (min-width: $mobile) {
-        p {
+    p {
+        @media (min-width: $mobile) {
             max-width: 60%;
+        }
+        span {
+            display: block;
+            margin-top: 20px;
+            font-size: 80%;
+            line-height: 105%;
+            text-transform: none;
         }
     }
     @media (max-width: $mobile) {
@@ -61,6 +68,81 @@ $gray: #1c1e2a;
     }
     button {
         font-size: 36px;
+    }
+    .player-scores {
+        &.public {
+            position: fixed;
+            bottom: 0;
+        }
+        width: 100%;
+        display: flex;
+        transition: .2s bottom;
+        &.inactive {
+            bottom: -400px;
+        }
+        @media (min-width: $mobile) {
+            justify-content: space-around;
+        }
+        @media (max-width: $mobile) {
+            flex-direction: column;
+            padding: 1vw;
+            width: calc(100% - 2vw);
+            box-sizing: border-box;
+            bottom: 1vw;
+        }
+        gap: 20px;
+        padding: 20px;
+        box-sizing: border-box;
+        .score {
+            border: 1px solid #fff;
+            padding: 20px;
+            box-sizing: border-box;
+            @media (min-width: $mobile) {
+                aspect-ratio: 1/1;
+                width: 200px;
+            }
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: $blue;
+            .name {
+                font-family: "lindsey-signature", sans-serif;
+                font-weight: 400;
+                font-style: normal;
+                font-size: 2rem;
+            }
+        }
+        &.host {
+            flex-direction: column;   
+            padding: 0;
+            .score {
+                background: transparent;
+                padding: 0;
+                width: 100%;
+                border: none;
+                aspect-ratio: auto;
+                text-align: left;
+                flex-direction: row;
+                justify-content: flex-start;
+                gap: 10px;
+                .name, .currency {
+                    font-family: "din-2014-narrow", serif;
+                    font-weight: 400;
+                    font-size: 24px;
+                }
+            }
+        }
+        &.score-recap {
+            .score {
+                width: auto;
+                .name {
+                    font-size: 5vw;
+                }
+                .currency {
+                    font-size: 7vw;
+                }
+            }
+        }
     }
 }
 
@@ -156,5 +238,82 @@ $gray: #1c1e2a;
         z-index: 99;
         opacity: 1;
         pointer-events: all;
+    }
+}
+.show-score-toggle {
+    cursor: pointer;
+    &.contestant {
+        position: fixed;
+        bottom: 3vw;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        font-size: 18px;
+    }
+}
+.show-host-toggle {
+    position: fixed;
+    bottom: 3vw;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    font-size: 18px;
+    cursor: pointer;
+    z-index: 999;
+    &:before {
+        content: 'Show ';
+    }
+    &.is-active {
+        &:before {
+            content: 'Hide ';
+        }
+    }
+}
+.host-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 20px;
+    padding: 3vw;
+    box-sizing: border-box;
+    background: $blue;
+    > div {
+        background: #fff;
+        color: $gray;
+        font-size: 24px!important;
+        padding: 15px;
+        text-align: center;
+        height: 70px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        cursor: pointer;
+        &.inactive {
+            opacity: .5;
+            pointer-events: none;
+        }
+    }
+    &.inactive {
+        bottom: -100vh;
+    }
+}
+.game-action {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 3vw;
+    box-sizing: border-box;
+    background: $blue;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    &:not(.host) {
+        z-index: 999;
     }
 }

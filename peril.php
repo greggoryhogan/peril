@@ -3,7 +3,7 @@
 Plugin Name:  Peril
 Plugin URI:	  https://fragmentlms.com
 Description:  Learning management software built for developers, by developers
-Version:	  1.1.8
+Version:	  1.1.0
 Author:		  Fragment
 Author URI:   https://fragmentwebworks.com
 License:      GPL2
@@ -31,15 +31,18 @@ function peril_scripts() {
 		return;
 	}
 	$post_type = get_post_type($post);
-	if($post_type == 'game') {
-		if( !function_exists('get_plugin_data') ){
-			require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
-		}
-		$plugin_data = get_plugin_data( PERIL_PLUGIN_FILE );
-		$version = $plugin_data['Version'];
+	$content = get_the_content('', true, $post);
+	if( !function_exists('get_plugin_data') ){
+		require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+	}
+	$plugin_data = get_plugin_data( PERIL_PLUGIN_FILE );
+	$version = $plugin_data['Version'];
+	if($post_type == 'game' || has_shortcode( $content, 'peril_create_game')) {
 		wp_register_style( 'peril', PERIL_PLUGIN_URL . 'assets/css/peril.css', false, $version );
 		wp_enqueue_style('peril');
-
+	}
+	if($post_type == 'game') {
+		add_filter ('show_admin_bar', '__return_false');
 		wp_enqueue_style('adobe-fonts', 'https://use.typekit.net/tjd7smh.css', false, $version);
 		wp_enqueue_script('js-cookie', 'https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js', array(), '1.0', true);
 		wp_enqueue_script('peril', PERIL_PLUGIN_URL . 'assets/js/peril.js', array('jquery', 'js-cookie'), $version, true);
@@ -49,8 +52,18 @@ function peril_scripts() {
 			'user_id' => $current_user->ID,
 			'game_id' => $post->ID,
 			'game_version' => get_game_version($post->ID),
+			'player_type' => get_player_type($post->ID),
 		);
 		wp_localize_script( 'peril', 'peril', $game_data);
-		
 	}
+	if(has_shortcode( $content, 'peril_create_game' )) {
+		wp_enqueue_script('peril-game-creator', PERIL_PLUGIN_URL . 'assets/js/peril-game-creator.js', array('jquery',), $version, true);
+		global $current_user;
+		$game_data = array(
+			'ajax_url' => admin_url( 'admin-ajax.php' ),
+			'user_id' => $current_user->ID,
+		);
+		wp_localize_script( 'peril-game-creator', 'peril_game_creator', $game_data);
+	}
+	
 }
