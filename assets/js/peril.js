@@ -2,11 +2,21 @@
     //console.log(peril);
     var game_version = peril.game_version;
     var player_type = peril.player_type;
+    var requires_login = peril.requires_login;
+    
+    var uuid = peril.user_id;
+    if(requires_login == 0 && uuid == 0) {
+        //set default uuid
+        uuid = Cookies.get('peril_uuid');
+        if(uuid == null) {
+            uuid = peril.default_uuid;
+            Cookies.set('peril_uuid', uuid, { expires: 7 })
+        }
+    }
 
-    var ping = 5000;
     window.setInterval(function(){
         updateGame();
-    },ping);
+    }, peril.game_timer);
 
     var processing_request = false;
 
@@ -18,7 +28,7 @@
                 'action' : 'check_peril_game_version',
                 'game_version' : game_version,
                 'game_id' : peril.game_id,
-                'user_id' : peril.user_id,
+                'user_id' : uuid,
             },
             success: function(response) {
                 if(response.needs_update == 1 && !processing_request) {
@@ -72,7 +82,7 @@
     $(document).on('click', '#audience-member', function(e) {
         e.preventDefault();
         $('#claim-host,#audience-member, #peril-login').remove();
-        Cookies.set('peril_audience_member', 1);
+        Cookies.set('peril_audience_member', 1); //Should update so it's specifying an audiance member for this game specifically
         $('#game-content').html('Welcome to the show!<br>During the game, click anywhere on the screen to see player scores.');
         processing_request = true;
         $.ajax({
@@ -107,7 +117,7 @@
             data: {
                 action : 'claim_host',
                 game_id : peril.game_id,
-                user_id : peril.user_id,
+                user_id : uuid,
             },
             success: function(response) {
                 game_version = response.game_version;
@@ -132,7 +142,7 @@
             data: {
                 action : 'claim_player',
                 game_id : peril.game_id,
-                user_id : peril.user_id,
+                user_id : uuid,
             },
             success: function(response) {
                 $('#game-content').html(response.game_content);
@@ -174,6 +184,7 @@
       });
 
       $(document).on('click', '.show-score-toggle, .player-scores', function(e) {
+        $('.show-score-toggle').toggleClass('is-active');
         $('.player-scores').toggleClass('inactive');
       });
 
@@ -197,6 +208,34 @@
             success: function(response) {
                 processing_request = false;
                 game_version = response.game_version;
+                $('#game-content').html(response.game_content);
+            }
+        });
+      });
+
+      $(document).on('click','#update-name',function(e) {
+        e.preventDefault();
+        processing_request = true;
+        $('#update-name').addClass('action-loading');
+        $('#update-name').text('Updating...');
+        
+        var name = $('#enter-player-name').val();
+        if(name == '') {
+            name = $('#enter-player-name').attr('placeholder');
+        }
+        $.ajax({
+            url: peril.ajax_url,
+            type: 'post',
+            data: {
+                action : 'update_player_name',
+                game_id : peril.game_id,
+                user_id : uuid,
+                name: name
+            },
+            success: function(response) {
+                processing_request = false;
+                $('#update-name').removeClass('action-loading');
+                $('#update-name').text('Update');
                 $('#game-content').html(response.game_content);
             }
         });

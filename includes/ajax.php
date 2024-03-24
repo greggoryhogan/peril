@@ -46,10 +46,10 @@ add_action("wp_ajax_nopriv_peril_login", "peril_login");
 
 function claim_host() {
     $game_id = absint($_POST['game_id']);
-    $user_id = absint($_POST['user_id']);
-    $host = get_post_meta($game_id, 'game_host', true);
+    $user_id = sanitize_text_field($_POST['user_id']);
+    $host = get_post_meta($game_id, 'peril_game_host', true);
     if($host == '') {
-        update_post_meta($game_id, 'game_host', $user_id);
+        update_post_meta($game_id, 'peril_game_host', $user_id);
         $game_version = update_game_version($game_id);
         wp_send_json(array(
             'game_content' => get_game_content($game_id),
@@ -62,13 +62,15 @@ add_action("wp_ajax_nopriv_claim_host", "claim_host");
 
 function claim_player() {
     $game_id = absint($_POST['game_id']);
-    $user_id = absint($_POST['user_id']);
-    $players = get_post_meta($game_id, 'game_players');
+    $user_id = sanitize_text_field($_POST['user_id']);
+    $players = get_post_meta($game_id, 'peril_game_players');
     if(!is_array($players)) {
         $players = array();
     }
     if(!in_array($user_id, $players)) {
-        add_post_meta($game_id, 'game_players', $user_id);
+        add_post_meta($game_id, 'peril_game_players', $user_id);
+        $count = count($players) + 1;
+        add_post_meta($game_id, "peril_player_name_$user_id", 'Player '.$count);
     }
     wp_send_json(array(
         'game_content' => get_game_content($game_id) 
@@ -77,10 +79,25 @@ function claim_player() {
 add_action("wp_ajax_claim_player", "claim_player");
 add_action("wp_ajax_nopriv_claim_player", "claim_player");
 
+function update_player_name() {
+    $game_id = absint($_POST['game_id']);
+    $user_id = sanitize_text_field($_POST['user_id']);
+    $name = sanitize_text_field($_POST['name']);
+    update_post_meta($game_id, "peril_player_name_$user_id", $name);
+    wp_send_json(array(
+        'game_content' => get_game_content($game_id) 
+    ));
+}
+add_action("wp_ajax_update_player_name", "update_player_name");
+add_action("wp_ajax_nopriv_update_player_name", "update_player_name");
 
 function start_game() {
     $game_id = absint($_POST['game_id']);
-    update_post_meta($game_id, 'game_started', 1);
+    update_post_meta($game_id, 'peril_game_started', 1);
+    $game_version = update_game_version($game_id);
+    update_post_meta($game_id,'peril_game_action', 'starting_game');
+    sleep(10);
+    delete_post_meta($game_id,'peril_game_action');
     $game_version = update_game_version($game_id);
     wp_send_json(array(
         'game_content' => get_game_content($game_id),
@@ -104,9 +121,9 @@ function host_action() {
     $game_id = absint($_POST['game_id']);
     $game_action = sanitize_text_field($_POST['game_action']);
     if($game_action == 'resume_game') {
-        delete_post_meta($game_id,'game_action');
+        delete_post_meta($game_id,'peril_game_action');
     } else {
-        update_post_meta($game_id,'game_action', $game_action);
+        update_post_meta($game_id,'peril_game_action', $game_action);
     }
     $game_version = update_game_version($game_id);
     wp_send_json(array(
@@ -135,7 +152,6 @@ function peril_upload_file() {
                 );
                 $attachment_id = wp_insert_attachment( $attachment, $upload['file'], $parent_post_id );
                 if (!is_wp_error($attachment_id)) {
-                    add_post_meta($attachment_id, 'peril_csv_upload', 'true');
                     require_once(ABSPATH . "wp-admin" . '/includes/image.php');
                     $attachment_data = wp_generate_attachment_metadata( $attachment_id, $upload['file'] );
                     wp_update_attachment_metadata( $attachment_id,  $attachment_data );
@@ -169,7 +185,11 @@ function create_game() {
     );
     $id = wp_insert_post($args);
     if(!is_wp_error( $id )) {
-        add_post_meta($id, 'game_csv', $game_csv);
+        add_post_meta($id, 'peril_game_csv', $game_csv);
+        $csv_title = get_post_meta($game_csv, 'peril_csv_game_title', true);
+        if($csv_title == '') {
+            add_post_meta($game_csv, 'peril_csv_game_title', $game_name);
+        }
         $message = 'Game created! <a href="'.get_permalink($id).'">Continue to game</a>';
         wp_send_json(array(
             'html' => $message

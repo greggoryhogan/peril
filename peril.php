@@ -19,6 +19,7 @@ define( 'PERIL_PLUGIN_FILE', __FILE__ );
 define( 'PERIL_PLUGIN_PATH', plugin_dir_path(__FILE__) );
 define( 'PERIL_PLUGIN_URL', plugin_dir_url( PERIL_PLUGIN_FILE ));
 
+include_once dirname( PERIL_PLUGIN_FILE ) . '/includes/settings.php';
 include_once dirname( PERIL_PLUGIN_FILE ) . '/includes/post-types.php';
 include_once dirname( PERIL_PLUGIN_FILE ) . '/includes/display.php';
 include_once dirname( PERIL_PLUGIN_FILE ) . '/includes/global.php';
@@ -47,9 +48,15 @@ function peril_scripts() {
 		wp_enqueue_script('js-cookie', 'https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js', array(), '1.0', true);
 		wp_enqueue_script('peril', PERIL_PLUGIN_URL . 'assets/js/peril.js', array('jquery', 'js-cookie'), $version, true);
 		global $current_user;
+		$game_timer = get_option('peril_update_frequency');
+		$requires_login = get_option('peril_gameplay_requires_login');
+		$default_uuid = create_default_uuid();
 		$game_data = array(
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
-			'user_id' => $current_user->ID,
+			'game_timer' => $game_timer,
+			'requires_login' => $requires_login,
+			'default_uuid' => $default_uuid,
+			'user_id' => get_peril_uuid(),
 			'game_id' => $post->ID,
 			'game_version' => get_game_version($post->ID),
 			'player_type' => get_player_type($post->ID),
@@ -58,10 +65,9 @@ function peril_scripts() {
 	}
 	if(has_shortcode( $content, 'peril_create_game' )) {
 		wp_enqueue_script('peril-game-creator', PERIL_PLUGIN_URL . 'assets/js/peril-game-creator.js', array('jquery',), $version, true);
-		global $current_user;
 		$game_data = array(
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
-			'user_id' => $current_user->ID,
+			'user_id' => get_peril_uuid(),
 		);
 		wp_localize_script( 'peril-game-creator', 'peril_game_creator', $game_data);
 	}

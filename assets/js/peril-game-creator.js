@@ -30,15 +30,28 @@
     $(document).on('click','#create-peril-game',function(e) {
         e.preventDefault();
         $('.game-creator-feedback').html('');
+        if($(this).hasClass('is-processing')) {
+            $('.game-creator-feedback').html('Your file is uploading, please try again.');
+        }
         var game_name = $('#game-name').val();
         if(game_name == '') {
-            $('.game-creator-feedback').html('Enter a game name');
+            $('.game-creator-feedback').html('Game name is required.');
             return false;
         }
-        var game_csv = $('#game-csv-id').val();
-        if(game_csv == '') {
-            $('.game-creator-feedback').html('Please upload a csv');
-            return false;
+        var answers_type = $('#answers-type').val();
+        if(answers_type == 'import-peril-csv') {
+            var game_csv = $('#game-csv-id').val();
+            if(game_csv == '') {
+                $('.game-creator-feedback').html('Game questions are required.');
+                return false;
+            }
+        }
+        if(answers_type == 'select-peril-csv') {
+            var game_csv = $('#peril-csv-select').val();
+            if(game_csv == 0) {
+                $('.game-creator-feedback').html('Game questions are required.');
+                return false;
+            }
         }
         $.ajax({
             url: peril_game_creator.ajax_url,
@@ -52,6 +65,13 @@
                 $('#peril-game-creator').html(response.html);
             }
         });
+      });
+
+      $(document).on('click','[name="answers-source"]', function() {
+        var val = $(this).val();
+        $('#answers-type').val(val);
+        $('.peril-conditional').removeClass('is-active');
+        $('#'+val).addClass('is-active');
       });
   
 })( jQuery );

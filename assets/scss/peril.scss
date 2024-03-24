@@ -18,11 +18,13 @@ $gray: #1c1e2a;
     background-color: $blue;
     padding: 3vw;
     margin: 0;
-    position: fixed;
+    position: absolute;
+    min-height: 100%;
+    width: 100%;
     top: 0;
-    bottom: 0;
     left: 0;
-    right: 0;
+    /*bottom: 0;
+    right: 0;*/
     color: #fff;
     display: flex;
     flex-direction: column;
@@ -39,6 +41,7 @@ $gray: #1c1e2a;
     p {
         @media (min-width: $mobile) {
             max-width: 60%;
+            margin: 0
         }
         span {
             display: block;
@@ -50,6 +53,7 @@ $gray: #1c1e2a;
     }
     @media (max-width: $mobile) {
         font-size: 36px;
+        line-height: 40px;
     }
     .question-text {
         font-family: "karmina", serif;
@@ -69,6 +73,35 @@ $gray: #1c1e2a;
     button {
         font-size: 36px;
     }
+    .player-name-field {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+        input {
+            font-size: inherit;
+            text-transform: uppercase;
+            &[type="text"] {
+                font-family: "lindsey-signature", sans-serif;
+                font-weight: 400;
+                background: transparent;
+                color: #fff;
+                border: none;
+                border-bottom: 2px solid #fff;
+                text-align: center;
+                &:focus {
+                    outline: 0;
+                }
+            }
+        }
+        .peril-button {
+            padding: 5px;
+            opacity: 1;
+            transition: .2s opacity;
+            /*align-self: center;*/
+        }
+    }
     .player-scores {
         &.public {
             position: fixed;
@@ -82,6 +115,7 @@ $gray: #1c1e2a;
         }
         @media (min-width: $mobile) {
             justify-content: space-around;
+            flex-wrap: wrap;
         }
         @media (max-width: $mobile) {
             flex-direction: column;
@@ -94,22 +128,27 @@ $gray: #1c1e2a;
         padding: 20px;
         box-sizing: border-box;
         .score {
-            border: 1px solid #fff;
             padding: 20px;
             box-sizing: border-box;
-            @media (min-width: $mobile) {
-                aspect-ratio: 1/1;
-                width: 200px;
-            }
             display: flex;
             flex-direction: column;
             justify-content: center;
             background: $blue;
+            @media (min-width: $mobile) {
+                max-width: 33%;
+            }
             .name {
+                word-wrap: break-word;
+                margin-bottom: 10px;
                 font-family: "lindsey-signature", sans-serif;
                 font-weight: 400;
                 font-style: normal;
-                font-size: 2rem;
+                @media (min-width: $mobile) {
+                    font-size: 2rem;
+                }
+                @media (max-width: $mobile) {
+                    font-size: 48px;
+                }
             }
         }
         &.host {
@@ -135,11 +174,23 @@ $gray: #1c1e2a;
         &.score-recap {
             .score {
                 width: auto;
-                .name {
-                    font-size: 5vw;
+                @media (min-width: $mobile) {
+                    .name {
+                        font-size: 5vw;
+                    }
+                    .currency {
+                        font-size: 7vw;
+                    }
                 }
-                .currency {
-                    font-size: 7vw;
+                @media (max-width: $mobile) {
+                    .name {
+                        font-size: 48px;
+                        line-height: 60px;
+                    }
+                    .currency {
+                        font-size: 56px;
+                        margin-top: 15px;
+                    }
                 }
             }
         }
@@ -171,8 +222,10 @@ $gray: #1c1e2a;
         margin-bottom: 0;
     }
     input {
-        font-size: inherit;
-        padding: 8px;
+        &:not([type="file"]) {
+            font-size: inherit;
+            padding: 8px;
+        }
     }
     button {
         background: $gray;
@@ -184,6 +237,14 @@ $gray: #1c1e2a;
             background: $blue;
             padding: 10px;
         }
+    }
+    label {
+        margin-bottom: 5px;
+    }
+    .description {
+        margin: 10px 0 5px 0;
+        padding: 0;
+        font-size: .9em;
     }
 }
 
@@ -197,6 +258,11 @@ $gray: #1c1e2a;
     &.is-active {
         max-height: 99px;
     }
+}
+
+.action-loading {
+    opacity: .5!important;
+    pointer-events: none;
 }
 
 .peril-modal {
@@ -249,6 +315,14 @@ $gray: #1c1e2a;
         transform: translateX(-50%);
         width: 100%;
         font-size: 18px;
+        &:before {
+            content: 'Show ';
+        }
+        &.is-active {
+            &:before {
+                content: 'Hide ';
+            }
+        }
     }
 }
 .show-host-toggle {
@@ -315,5 +389,16 @@ $gray: #1c1e2a;
     justify-content: center;
     &:not(.host) {
         z-index: 999;
+    }
+}
+.game-creator-feedback {
+    margin-top: 8px;
+    font-style: italic;
+}
+.peril-conditional {
+    display: none;
+    &.is-active {
+        display: block;
+        margin-bottom: 24px;
     }
 }
