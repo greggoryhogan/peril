@@ -184,8 +184,9 @@
       });
 
       $(document).on('click', '.show-score-toggle, .player-scores', function(e) {
-        $('.show-score-toggle').toggleClass('is-active');
         $('.player-scores').toggleClass('inactive');
+        $('.show-score-toggle').toggleClass('is-active');
+        return false;
       });
 
       $(document).on('click', '.show-host-toggle', function(e) {
@@ -239,6 +240,13 @@
                 $('#game-content').html(response.game_content);
             }
         });
+      });
+
+      //onbeforeunload
+      $(window).on('beforeunload', function(){
+        if(player_type == 'host') {
+            return 'You are the host, are you sure you want to leave?';
+        }
       });
   
 })( jQuery );

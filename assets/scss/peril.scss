@@ -19,7 +19,13 @@ $gray: #1c1e2a;
     padding: 3vw;
     margin: 0;
     position: absolute;
-    min-height: 100%;
+    height: 100%;
+    @media (max-width: $mobile) {
+        position: absolute;
+        min-height: 100%;
+        top: 0;
+        bottom: auto;
+    }
     width: 100%;
     top: 0;
     left: 0;
@@ -29,7 +35,9 @@ $gray: #1c1e2a;
     display: flex;
     flex-direction: column;
     text-transform: uppercase;
-    justify-content: center;
+    @media (min-width:$mobile) {
+        justify-content: center;
+    }
     gap: 4vh;
     align-items: center;
     box-sizing: border-box;
@@ -106,12 +114,17 @@ $gray: #1c1e2a;
         &.public {
             position: fixed;
             bottom: 0;
+            width: 100%;
+            height: 100vh;
+            background: $blue;
+            cursor: pointer;
         }
         width: 100%;
         display: flex;
         transition: .2s bottom;
+        z-index: 20;
         &.inactive {
-            bottom: -400px;
+            bottom: -100vh;
         }
         @media (min-width: $mobile) {
             justify-content: space-around;
@@ -191,6 +204,80 @@ $gray: #1c1e2a;
                         font-size: 56px;
                         margin-top: 15px;
                     }
+                }
+            }
+        }
+    }
+    .game-board {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+        grid-template-rows: 120px auto;
+        @media (max-width: $mobile) {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto;
+            
+        }
+        border: 10px solid #04080e;
+        background: #04080e;
+        gap: 12px;
+        margin: -3vw;
+        @media (min-width:$mobile) {
+            height: calc(100% + 6vw);
+        }
+        width: calc(100% + 6vw);
+        box-sizing: border-box;
+        > div {
+            background: $blue;
+        }
+        .category {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            @media (max-width: $mobile) {
+                display: none;
+            }
+        }
+        .round-column {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: #04080e;
+            gap: 12px;
+            @media (max-width: $mobile) {
+                &:before {
+                    content: attr(data-category);
+                }
+            }
+            div {
+                //background: radial-gradient($blue 100%, #000 10%);
+                background: $blue;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                color: #eea44b;
+                text-shadow: 5px 5px 5px #000;
+                position: relative;
+                @media (max-width: $mobile) {
+                    padding: 20px;
+                }
+                &:after {
+                    content: '';
+                    background: radial-gradient(circle, rgba(8,20,132,1) 80%, rgba(0,0,0,1) 99%);
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    opacity: .2;
+                    z-index: 1;
+                }
+                span{
+                    position: relative;
+                    z-index: 2;
+                    transform: scale(1, 1.4);
+                    letter-spacing: 3px;
                 }
             }
         }
@@ -310,11 +397,12 @@ $gray: #1c1e2a;
     cursor: pointer;
     &.contestant {
         position: fixed;
-        bottom: 3vw;
+        bottom: 1vw;
         left: 50%;
         transform: translateX(-50%);
         width: 100%;
         font-size: 18px;
+        z-index: 99;
         &:before {
             content: 'Show ';
         }
@@ -355,6 +443,7 @@ $gray: #1c1e2a;
     padding: 3vw;
     box-sizing: border-box;
     background: $blue;
+    z-index: 99;
     > div {
         background: #fff;
         color: $gray;
@@ -381,6 +470,14 @@ $gray: #1c1e2a;
     left: 0;
     width: 100%;
     height: 100%;
+    @media (max-width: $mobile) {
+        position: fixed;
+        height: 100%;
+        top: 0;
+        bottom: auto;
+        overflow: auto;
+        display: block;
+    }
     padding: 3vw;
     box-sizing: border-box;
     background: $blue;

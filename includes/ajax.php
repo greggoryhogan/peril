@@ -94,6 +94,7 @@ add_action("wp_ajax_nopriv_update_player_name", "update_player_name");
 function start_game() {
     $game_id = absint($_POST['game_id']);
     update_post_meta($game_id, 'peril_game_started', 1);
+    update_post_meta($game_id, 'peril_game_round', 1);
     $game_version = update_game_version($game_id);
     update_post_meta($game_id,'peril_game_action', 'starting_game');
     sleep(10);

@@ -72,3 +72,8 @@ function create_default_uuid() {
     $hash = wp_hash($time);
     return $hash;
 }
+
+function create_questions_from_csv($attachment_id) {
+    //$data = wp_get_attachment_metadata(get_the_ID());
+    //$form .= basename( get_attached_file(get_the_ID()));
+}

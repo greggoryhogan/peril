@@ -94,6 +94,13 @@ function get_game_content($post_id) {
         if($peril_uuid == 0 && !is_audience_member()) {
             $content .= '<button id="audience-member" class="peril-button">Join as an audience member</button>';
         }
+    } if($host == '') {
+        $content .= '<p>The host has left the game.</p>';
+        if(!in_array($peril_uuid, $players)) {
+            $content .= '<button class="peril-button" id="claim-host">Join as host</button>';
+        } else {
+            $content .= '<p>As a contestant, you cannot host. Please have someone else join to host your game.</p>';
+        }
     } else {
         $content = show_started_game($post_id);
     }
@@ -141,7 +148,8 @@ function show_started_game($post_id) {
             $content .= '<div class="show-host-toggle '.$toggle_active .'">Game Options</div>';
             $content .= '<div class="host-actions '.$actions_active.'">';
                 $actions = array(
-                    'show_scores' => 'Show Scores'
+                    'show_scores' => 'Show Scores',
+                    'display_game_board' => 'Show Board'
                 );
                 if($current_action != '') {
                     $content .= '<div class="host-action" data-action="resume_game">Resume Game</div>';    
@@ -166,7 +174,7 @@ function show_started_game($post_id) {
             $content .= get_player_scores($players, $post_id, 'public inactive');
         } else {
             if(!is_audience_member()) {
-                $content .= '<button id="audience-member" class="peril-button">Join as an audience member</button>';
+               // $content .= '<button id="audience-member" class="peril-button">Join as an audience member</button>';
             }
         }
     } 
@@ -189,6 +197,9 @@ function get_screen_content($game_id, $current_action, $player_type) {
     if($current_action != '') {
         $content .= '<div class="game-action '.$player_type.'">';
         switch($current_action) {
+            case 'starting_game':
+                $content .= '<div class="question-text">The game is about to start!</div>';
+                break;
             case 'show_scores':
                 $players = get_post_meta($game_id, 'peril_game_players');
                 if(!is_array($players)) {
@@ -196,14 +207,16 @@ function get_screen_content($game_id, $current_action, $player_type) {
                 }
                 $content .= get_player_scores($players, $game_id, 'score-recap');
                 break;
-            case 'starting_game':
-                $content .= '<div class="question-text">The game is about to start!</div>';
+            case 'display_game_board':
+                $content .= display_game_board($game_id);
                 break;
         }
         $content .= '</div>';
         return $content;
     } else {
-        switch($player_type) {
+        //show board for now
+        $content = display_game_board($game_id);
+        /*switch($player_type) {
             case 'host':
                 $content = '<p class="peril-white">You are the host</p>';
                 break;
@@ -213,7 +226,7 @@ function get_screen_content($game_id, $current_action, $player_type) {
             case 'audience_member': 
                 $content = '<p class="peril-white">You are an audience member, this is audience content.</p>';
                 break;
-        }
+        }*/
     }
     return $content;
 }
@@ -298,4 +311,72 @@ function peril_create_game_callback() {
     wp_reset_postdata();
 
     return $form;
+}
+
+function display_game_board($game_id) {
+    $board_array = maybe_unserialize(get_post_meta($game_id, 'peril_game_board', true));
+    $round = get_post_meta($game_id, 'peril_game_round', true);
+    if($round == '') {
+        $round = 1;
+    }
+    $used_answers_array = maybe_unserialize(get_post_meta($game_id, 'peril_game_used_answers', true));
+    if(!is_array($used_answers_array)) {
+        $used_answers_array = array();
+    }
+    //$board_array = '';
+    if($board_array == '') {
+        // board hasnt been created
+        $game_csv = get_post_meta($game_id, 'peril_game_csv', true);
+        if($game_csv == '') {
+            return 'There are no answers for this game. Please create a new game.';
+        }
+        $csv_url = wp_get_attachment_url($game_csv);
+        //remove url
+        $csv_url = str_replace(get_bloginfo('url'),ABSPATH,$csv_url); 
+        $f = fopen($csv_url, "r");
+        $rows = 0;
+        $board_array = array();
+        while (($line = fgetcsv($f)) !== false) {
+            if($rows > 0) {
+                //skip headers
+                $round = $line[0];
+                $category = $line[1];
+                $answer = $line[2];
+                $question = $line[3];
+                $value = $line[4];
+                $board_array["$round"]["$category"]["$value"] = array(
+                    'answer' => $answer,
+                    'question' => $question
+                );
+            }
+            $rows++;
+        }
+        fclose($f);
+        update_post_meta($game_id, 'peril_game_board', maybe_serialize($board_array));
+    } 
+    $content = '<div class="game-board">';
+        
+        foreach($board_array[$round] as $category => $array) {
+            $content .= '<div class="category">'.$category.'</div>';   
+        }
+        foreach($board_array[$round] as $category => $array) {
+            $content .= '<div class="round-column" data-category="'.$category.'">';
+            foreach($array as $k => $v) {
+                $content .= '<div><span>$'.$k.'</span></div>';
+            }
+            $content .= '</div>';
+        }
+       
+    $content .= '</div>';
+    return $content;
+}
+
+function convertToArray(string $content): array
+{
+   $data = str_getcsv($content,"\n");
+   array_walk($data, function(&$a) use ($data) {
+       $a = str_getcsv($a);
+   });
+
+   return $data;
 }
