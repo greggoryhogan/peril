@@ -315,15 +315,15 @@ function peril_create_game_callback() {
 
 function display_game_board($game_id) {
     $board_array = maybe_unserialize(get_post_meta($game_id, 'peril_game_board', true));
-    $round = get_post_meta($game_id, 'peril_game_round', true);
-    if($round == '') {
-        $round = 1;
+    $game_round = get_post_meta($game_id, 'peril_game_round', true);
+    if($game_round == '') {
+        $game_round = 1;
     }
     $used_answers_array = maybe_unserialize(get_post_meta($game_id, 'peril_game_used_answers', true));
     if(!is_array($used_answers_array)) {
         $used_answers_array = array();
     }
-    //$board_array = '';
+    $board_array = '';
     if($board_array == '') {
         // board hasnt been created
         $game_csv = get_post_meta($game_id, 'peril_game_csv', true);
@@ -355,14 +355,20 @@ function display_game_board($game_id) {
         update_post_meta($game_id, 'peril_game_board', maybe_serialize($board_array));
     } 
     $content = '<div class="game-board">';
-        
-        foreach($board_array[$round] as $category => $array) {
+        foreach($board_array[$game_round] as $category => $array) {
             $content .= '<div class="category">'.$category.'</div>';   
         }
-        foreach($board_array[$round] as $category => $array) {
+        foreach($board_array[$game_round] as $category => $array) {
             $content .= '<div class="round-column" data-category="'.$category.'">';
             foreach($array as $k => $v) {
-                $content .= '<div><span>$'.$k.'</span></div>';
+                $content .= '<div data-category="'.$category.'" data-value="'.$k.'"><span class="value">$'.$k.'</span>';
+                if(isset($used_answers_array[$category])) {
+                    if(in_array($used_answers_array[$category])) {
+                        $content .= '<span class="answer"><span class="prompt">'.$v['answer'].'</span>'.$v['question'].'</span>';
+                    }
+                }
+                $content .= '<span class="answer"><span class="prompt">'.$v['answer'].'</span>'.$v['question'].'</span>';
+                $content .= '</div>';
             }
             $content .= '</div>';
         }

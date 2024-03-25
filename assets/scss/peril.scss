@@ -211,7 +211,7 @@ $gray: #1c1e2a;
     .game-board {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
-        grid-template-rows: 120px auto;
+        grid-template-rows: 200px auto;
         @media (max-width: $mobile) {
             grid-template-columns: 1fr;
             grid-template-rows: auto;
@@ -233,6 +233,9 @@ $gray: #1c1e2a;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            line-height: 95%;
+            font-size: 2.5vw;
+            padding: 10px;
             @media (max-width: $mobile) {
                 display: none;
             }
@@ -256,8 +259,6 @@ $gray: #1c1e2a;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
-                color: #eea44b;
-                text-shadow: 5px 5px 5px #000;
                 position: relative;
                 @media (max-width: $mobile) {
                     padding: 20px;
@@ -273,11 +274,44 @@ $gray: #1c1e2a;
                     opacity: .2;
                     z-index: 1;
                 }
-                span{
+                .value {
                     position: relative;
                     z-index: 2;
                     transform: scale(1, 1.4);
                     letter-spacing: 3px;
+                    color: #eea44b;
+                    text-shadow: 5px 5px 5px #000;
+                }
+                .answer {
+                    position: absolute;
+                    top: 0px;
+                    z-index: 3;
+                    left: 0px;
+                    width: 100%;
+                    height: 100%;
+                    flex-direction: column;
+                    justify-content: center;
+                    display: none;
+                    background: $blue;
+                    box-sizing: border-box;
+                    display: none;
+                    font-size: 1.5vw;
+                    padding: 10px;
+                    line-height: 2vw;
+                    .prompt {
+                        font-size: 20px;
+                        line-height: 20px;
+                        display: block;
+                        margin-bottom: 10px;
+                    }
+                    @media (max-width: $mobile) {
+                        font-size: 30px;
+                    }
+                }
+                &:hover {
+                    .answer {
+                        display: flex;
+                    }
                 }
             }
         }
