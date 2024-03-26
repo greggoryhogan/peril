@@ -125,6 +125,12 @@ function host_action() {
         delete_post_meta($game_id,'peril_game_action');
     } else {
         update_post_meta($game_id,'peril_game_action', $game_action);
+        if($game_action == 'show_clue') {
+            $category = sanitize_text_field( $_POST['category'] );
+            $value = absint( $_POST['value'] );
+            update_post_meta($game_id, 'peril_current_category', $category);
+            update_post_meta($game_id, 'peril_current_value', $value);
+        }
     }
     $game_version = update_game_version($game_id);
     wp_send_json(array(
@@ -201,3 +207,75 @@ function create_game() {
 }
 add_action("wp_ajax_create_game", "create_game");
 add_action("wp_ajax_nopriv_create_game", "create_game");
+
+function player_buzz() {
+    $game_id = absint($_POST['game_id']);
+    $user_id = sanitize_text_field($_POST['user_id']);
+    $peril_current_category = get_post_meta($game_id, 'peril_current_category', true);
+    if($peril_current_category != '') {
+        $currently_answering = get_post_meta($game_id, 'peril_player_answering', true);
+        $already_buzzed = get_post_meta($game_id, 'peril_players_buzzed', true);
+        if(!is_array($already_buzzed)) {
+            $already_buzzed = array();
+        }
+        if(in_array($user_id, $already_buzzed)) {
+            //nothing, they got a question wrong
+        } else if($currently_answering == '') {
+            update_post_meta( $game_id, 'peril_player_answering', $user_id);
+            $already_buzzed[] = $user_id;
+            update_post_meta($game_id, 'peril_players_buzzed', $already_buzzed);
+            $game_version = update_game_version($game_id);
+        } 
+    } else {
+        $game_version = get_game_version($game_id);
+    }
+    wp_send_json(
+        array(
+            'game_version' => $game_version,
+            'game_content' => get_game_content($game_id),
+        )
+    );
+}
+add_action("wp_ajax_player_buzz", "player_buzz");
+add_action("wp_ajax_nopriv_player_buzz", "player_buzz");
+
+function player_response() {
+    $game_id = absint($_POST['game_id']);
+    $player_response = sanitize_text_field($_POST['player_response']);
+    if($player_response == 'correct') {
+        //score them and on to the next question
+        $currently_answering = get_post_meta($game_id, 'peril_player_answering', true);
+        $peril_current_value = get_post_meta($game_id, 'peril_current_value', true);
+        $peril_current_category = get_post_meta($game_id, 'peril_current_category', true);
+        $score = get_post_meta($game_id,"peril_player_{$currently_answering}_score", true);
+        if($score == '') {
+            $score = 0;
+        }
+        $score = absint($score) + absint($peril_current_value);
+        $used_answers = get_post_meta($game_id, 'peril_game_used_answers', true);
+        if($used_answers == '') {
+            $used_answers = array();
+        }
+        $used_answers = maybe_unserialize($used_answers);
+        $used_answers[$peril_current_category][] = $peril_current_value;
+        update_post_meta($game_id,  'peril_game_used_answers', $used_answers);
+
+        update_post_meta($game_id,"peril_player_{$currently_answering}_score", $score);
+        delete_post_meta( $game_id, 'peril_current_value');
+        delete_post_meta( $game_id, 'peril_current_category');
+        delete_post_meta( $game_id, 'peril_game_action');
+        delete_post_meta($game_id, 'peril_players_buzzed');
+    }
+    //remove player answering
+    delete_post_meta( $game_id, 'peril_player_answering');
+    $game_version = update_game_version($game_id);
+    wp_send_json(
+        array(
+            'game_version' => $game_version,
+            'game_content' => get_game_content($game_id),
+        )
+    );
+
+}
+add_action("wp_ajax_player_response", "player_response");
+add_action("wp_ajax_nopriv_player_response", "player_response");

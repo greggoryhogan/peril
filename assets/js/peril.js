@@ -176,10 +176,52 @@
       });
 
       $(document).on('click', '#game-content', function(e) {
-        if(player_type == 'contestant') {
-            //buzz in
+        if(player_type == 'contestant' && !$('.game-action.show_clue').hasClass('player-answering')) {
+            e.preventDefault();
+            processing_request = true;
+            $.ajax({
+                url: peril.ajax_url,
+                type: 'post',
+                data: {
+                    action : 'player_buzz',
+                    game_id : peril.game_id,
+                    user_id : uuid,
+                },
+                success: function(response) {
+                    processing_request = false;
+                    game_version = response.game_version;
+                    $('#game-content').html(response.game_content);
+                }
+            });
         } else if(player_type == 'audience_member') {
             $('.player-scores').toggleClass('inactive');
+        }
+      });
+
+      $(document).on('click', '.game-board .round-question', function() {
+        if($(this).hasClass('unavailable')) {
+            return false;
+        }
+        if(player_type == 'host') {
+            //alert('yo');
+            var category = $(this).attr('data-category');
+            var value = $(this).attr('data-value');
+            $.ajax({
+                url: peril.ajax_url,
+                type: 'post',
+                data: {
+                    action : 'host_action',
+                    game_id : peril.game_id,
+                    game_action : 'show_clue',
+                    category : category,
+                    value : value
+                },
+                success: function(response) {
+                    processing_request = false;
+                    game_version = response.game_version;
+                    $('#game-content').html(response.game_content);
+                }
+            });
         }
       });
 
@@ -192,6 +234,28 @@
       $(document).on('click', '.show-host-toggle', function(e) {
         $(this).toggleClass('is-active');
         $('.host-actions').toggleClass('inactive');
+      });
+
+      $(document).on('click','.host-answer-responses button',function(e) {
+        if(player_type == 'host') {
+            e.preventDefault();
+            var player_response = $(this).attr('data-value');
+            processing_request = true;
+            $.ajax({
+                url: peril.ajax_url,
+                type: 'post',
+                data: {
+                    action : 'player_response',
+                    game_id : peril.game_id,
+                    player_response : player_response,
+                },
+                success: function(response) {
+                    processing_request = false;
+                    game_version = response.game_version;
+                    $('#game-content').html(response.game_content);
+                }
+            });
+        }
       });
 
       $(document).on('click','.host-action',function(e) {
@@ -243,10 +307,10 @@
       });
 
       //onbeforeunload
-      $(window).on('beforeunload', function(){
+      /*$(window).on('beforeunload', function(){
         if(player_type == 'host') {
             return 'You are the host, are you sure you want to leave?';
         }
-      });
+      });*/
   
 })( jQuery );

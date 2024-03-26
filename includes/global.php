@@ -31,7 +31,7 @@ function get_player_scores($players, $game_id, $class = '') {
             $score = 0;
         }
         $username = get_post_meta($game_id, "peril_player_name_$player", true);
-        $scores .= '<div class="score"><div class="name">'.$username.'</div><div class="currency">$'.$score.'</div></div>';
+        $scores .= '<div class="score"><div class="name">'.$username.'</div><div class="currency">$'.number_format($score, 0).'</div></div>';
     }
     $scores .= '</div>';
     return $scores;
@@ -52,7 +52,7 @@ function get_player_type($post_id) {
     }
     $player_type = '';
     $peril_uuid = get_peril_uuid();
-    if($peril_uuid > 0) {
+    if($peril_uuid != 0) {
         $host = get_post_meta($post_id, 'peril_game_host', true);
         if($peril_uuid == $host) {
             $player_type = 'host';

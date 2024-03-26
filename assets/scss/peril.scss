@@ -252,7 +252,7 @@ $gray: #1c1e2a;
                     content: attr(data-category);
                 }
             }
-            div {
+            .round-question {
                 //background: radial-gradient($blue 100%, #000 10%);
                 background: $blue;
                 flex: 1;
@@ -262,6 +262,12 @@ $gray: #1c1e2a;
                 position: relative;
                 @media (max-width: $mobile) {
                     padding: 20px;
+                }
+                &.unavailable {
+                    opacity: .5;
+                    &:hover {
+                        opacity: 1;
+                    }
                 }
                 &:after {
                     content: '';
@@ -297,7 +303,7 @@ $gray: #1c1e2a;
                     display: none;
                     font-size: 1.5vw;
                     padding: 10px;
-                    line-height: 2vw;
+                    line-height: 1.5vw;
                     .prompt {
                         font-size: 20px;
                         line-height: 20px;
@@ -313,6 +319,13 @@ $gray: #1c1e2a;
                         display: flex;
                     }
                 }
+            }
+        }
+        &.round-3 {
+            display: flex;
+            flex-direction: column;
+            .question-text {
+                word-break: keep-all;
             }
         }
     }
@@ -520,6 +533,30 @@ $gray: #1c1e2a;
     justify-content: center;
     &:not(.host) {
         z-index: 999;
+    }
+    &.current-player-answering {
+        background: #138510;
+    }
+    .host-answer-responses {
+        display: flex;
+        gap: 30px;
+        margin-top: 30px;
+        justify-content: center;
+        button {
+            padding: 10px 30px!important;
+            &.correct {
+                &:hover {
+                    background-color: #138510!important;
+                    color: #fff!important;
+                }
+            }
+            &.incorrect {
+                &:hover {
+                    background-color: #ff0000!important;
+                    color: #fff!important;
+                }
+            }
+        }
     }
 }
 .game-creator-feedback {
