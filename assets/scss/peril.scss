@@ -355,6 +355,26 @@ $gray: #1c1e2a;
     &:last-of-type {
         margin-bottom: 0;
     }
+    &.row {
+        flex-direction: row;
+        justify-content: center;
+        gap: 15px;
+        input, button {
+            height: 100%;
+            margin: 0;
+        }
+    }
+    &.wager {
+        margin-top: 15px;
+        button {
+            background: #fff;
+            color: #1c1e2a;
+            &:hover {
+                color: #fff;
+                background: #1c1e2a;
+            }
+        }
+    }
     input {
         &:not([type="file"]) {
             font-size: inherit;

@@ -31,14 +31,21 @@ function get_player_scores($players, $game_id, $class = '') {
             $score = 0;
         }
         $username = get_post_meta($game_id, "peril_player_name_$player", true);
-        $scores .= '<div class="score"><div class="name">'.$username.'</div><div class="currency">$'.number_format($score, 0).'</div></div>';
+        $scores .= '<div class="score"><div class="name">'.$username.'</div><div class="currency">';
+        if($score >= 0) {
+            $scores .= '$'.number_format($score, 0);
+        } else {
+            $score = $score * -1;
+            $scores .= '- $'.number_format($score, 0);
+        }
+        $scores .= '</div></div>';
     }
     $scores .= '</div>';
     return $scores;
 }
 
-function is_audience_member() {
-    if(isset($_COOKIE['peril_audience_member'])) {
+function is_audience_member($game_id) {
+    if(isset($_COOKIE["peril_audience_member_$game_id"])) {
         return true;
     }
     return false;
@@ -61,7 +68,7 @@ function get_player_type($post_id) {
         } else {
             $player_type = 'audience_member';
         }
-    } else if(is_audience_member()) {
+    } else if(is_audience_member($post_id)) {
         $player_type = 'audience_member';
     }
     return $player_type;

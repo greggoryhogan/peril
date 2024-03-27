@@ -59,7 +59,7 @@ function peril_scripts() {
 			'user_id' => get_peril_uuid(),
 			'game_id' => $post->ID,
 			'game_version' => get_game_version($post->ID),
-			'player_type' => get_player_type($post->ID),
+			'player_type' => get_player_type($post->ID)
 		);
 		wp_localize_script( 'peril', 'peril', $game_data);
 	}

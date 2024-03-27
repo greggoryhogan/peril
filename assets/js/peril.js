@@ -82,7 +82,7 @@
     $(document).on('click', '#audience-member', function(e) {
         e.preventDefault();
         $('#claim-host,#audience-member, #peril-login').remove();
-        Cookies.set('peril_audience_member', 1); //Should update so it's specifying an audiance member for this game specifically
+        Cookies.set('peril_audience_member_'+peril.game_id, 1); //Should update so it's specifying an audiance member for this game specifically
         $('#game-content').html('Welcome to the show!<br>During the game, click anywhere on the screen to see player scores.');
         processing_request = true;
         $.ajax({
@@ -176,6 +176,9 @@
       });
 
       $(document).on('click', '#game-content', function(e) {
+        if($('.awaiting-start').length) {
+            return;
+        }
         if(player_type == 'contestant' && !$('.game-action.show_clue').hasClass('player-answering')) {
             e.preventDefault();
             processing_request = true;
@@ -269,6 +272,30 @@
                 action : 'host_action',
                 game_id : peril.game_id,
                 game_action : game_action
+            },
+            success: function(response) {
+                processing_request = false;
+                game_version = response.game_version;
+                $('#game-content').html(response.game_content);
+            }
+        });
+      });
+
+      $(document).on('click', '#submit-wager', function(e) {
+        e.preventDefault();
+        processing_request = true;
+        var wager = $('#input-wager').val();
+        if(wager == '') {
+            alert('Please set a wager for the contestant');
+            return;
+        }
+        $.ajax({
+            url: peril.ajax_url,
+            type: 'post',
+            data: {
+                action : 'set_daily_double',
+                game_id : peril.game_id,
+                wager : wager,
             },
             success: function(response) {
                 processing_request = false;

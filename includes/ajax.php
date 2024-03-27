@@ -97,7 +97,7 @@ function start_game() {
     update_post_meta($game_id, 'peril_game_round', 1);
     $game_version = update_game_version($game_id);
     update_post_meta($game_id,'peril_game_action', 'starting_game');
-    sleep(10);
+    sleep(5);
     delete_post_meta($game_id,'peril_game_action');
     $game_version = update_game_version($game_id);
     wp_send_json(array(
@@ -130,6 +130,16 @@ function host_action() {
             $value = absint( $_POST['value'] );
             update_post_meta($game_id, 'peril_current_category', $category);
             update_post_meta($game_id, 'peril_current_value', $value);
+        } else if($game_action == 'goto_round_1') {
+            update_post_meta($game_id, 'peril_game_round', '1');
+            delete_post_meta($game_id,'peril_game_action');
+        } else if($game_action == 'goto_round_2') {
+            update_post_meta($game_id, 'peril_game_round', '2');
+            delete_post_meta($game_id,'peril_game_action');
+        } else if($game_action == 'goto_round_3') {
+            delete_post_meta($game_id,'peril_game_action');
+            update_post_meta($game_id, 'peril_game_round', '3');
+            delete_post_meta($game_id,'peril_game_action');
         }
     }
     $game_version = update_game_version($game_id);
@@ -242,16 +252,33 @@ add_action("wp_ajax_nopriv_player_buzz", "player_buzz");
 function player_response() {
     $game_id = absint($_POST['game_id']);
     $player_response = sanitize_text_field($_POST['player_response']);
-    if($player_response == 'correct') {
-        //score them and on to the next question
-        $currently_answering = get_post_meta($game_id, 'peril_player_answering', true);
-        $peril_current_value = get_post_meta($game_id, 'peril_current_value', true);
-        $peril_current_category = get_post_meta($game_id, 'peril_current_category', true);
+
+    $action = get_post_meta($game_id, 'peril_game_action', true);
+    $peril_current_value = get_post_meta($game_id, 'peril_current_value', true);
+    $peril_current_category = get_post_meta($game_id, 'peril_current_category', true);
+    if($action == 'daily_double') {
+        //daily double
+        $currently_answering = get_post_meta($game_id, 'peril_last_player', true);
+        $wager = absint(get_post_meta($game_id, 'peril_dd_wager', true));
         $score = get_post_meta($game_id,"peril_player_{$currently_answering}_score", true);
         if($score == '') {
             $score = 0;
         }
-        $score = absint($score) + absint($peril_current_value);
+        if($player_response == 'correct') {
+            //score them and on to the next question
+            $score = intval($score) + $wager;
+        } else {
+            //subtract points
+            $score = intval($score) - $wager;
+        }
+
+        //update their score
+        update_post_meta($game_id,"peril_player_{$currently_answering}_score", $score);
+        delete_post_meta($game_id, 'peril_dd_wager');
+        delete_post_meta( $game_id, 'peril_current_value');
+        delete_post_meta( $game_id, 'peril_current_category');
+        delete_post_meta( $game_id, 'peril_game_action');
+        delete_post_meta($game_id, 'peril_players_buzzed');
         $used_answers = get_post_meta($game_id, 'peril_game_used_answers', true);
         if($used_answers == '') {
             $used_answers = array();
@@ -260,14 +287,41 @@ function player_response() {
         $used_answers[$peril_current_category][] = $peril_current_value;
         update_post_meta($game_id,  'peril_game_used_answers', $used_answers);
 
+        
+        delete_post_meta( $game_id, 'peril_player_answering');
+
+    } else {
+        $currently_answering = get_post_meta($game_id, 'peril_player_answering', true);
+        //normal clue
+        $score = get_post_meta($game_id,"peril_player_{$currently_answering}_score", true);
+        if($score == '') {
+            $score = 0;
+        }
+        if($player_response == 'correct') {
+            //score them and on to the next question
+            $score = intval($score) + absint($peril_current_value);
+            $used_answers = get_post_meta($game_id, 'peril_game_used_answers', true);
+            if($used_answers == '') {
+                $used_answers = array();
+            }
+            $used_answers = maybe_unserialize($used_answers);
+            $used_answers[$peril_current_category][] = $peril_current_value;
+            update_post_meta($game_id,  'peril_game_used_answers', $used_answers);
+            delete_post_meta( $game_id, 'peril_current_value');
+            delete_post_meta( $game_id, 'peril_current_category');
+            delete_post_meta( $game_id, 'peril_game_action');
+            delete_post_meta($game_id, 'peril_players_buzzed');
+        } else {
+            //subtract points
+            $score = intval($score) - absint($peril_current_value);
+        }
+        //update their score
         update_post_meta($game_id,"peril_player_{$currently_answering}_score", $score);
-        delete_post_meta( $game_id, 'peril_current_value');
-        delete_post_meta( $game_id, 'peril_current_category');
-        delete_post_meta( $game_id, 'peril_game_action');
-        delete_post_meta($game_id, 'peril_players_buzzed');
+        //remove player answering and log last player for dbl jeopardy
+        update_post_meta($game_id, 'peril_last_player', $currently_answering);
+        delete_post_meta( $game_id, 'peril_player_answering');
     }
-    //remove player answering
-    delete_post_meta( $game_id, 'peril_player_answering');
+    
     $game_version = update_game_version($game_id);
     wp_send_json(
         array(
@@ -279,3 +333,20 @@ function player_response() {
 }
 add_action("wp_ajax_player_response", "player_response");
 add_action("wp_ajax_nopriv_player_response", "player_response");
+
+function set_daily_double() {
+    $game_id = absint($_POST['game_id']);
+    $wager = absint($_POST['wager']);
+    update_post_meta($game_id,'peril_game_action', 'daily_double');
+    update_post_meta($game_id, 'peril_dd_wager', $wager);
+    $game_version = update_game_version($game_id);
+    wp_send_json(
+        array(
+            'game_version' => $game_version,
+            'game_content' => get_game_content($game_id),
+        )
+    );
+
+}
+add_action("wp_ajax_set_daily_double", "set_daily_double");
+add_action("wp_ajax_nopriv_set_daily_double", "set_daily_double");

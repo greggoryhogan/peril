@@ -51,6 +51,7 @@ function get_game_content($post_id) {
     $started = get_post_meta($post_id, 'peril_game_started', true);
     $host = get_post_meta($post_id, 'peril_game_host', true);
     $players = get_post_meta($post_id, 'peril_game_players');
+    $requires_login = get_option('peril_gameplay_requires_login');
     $peril_uuid = get_peril_uuid();
     if(!is_array($players)) {
         $players = array();
@@ -58,10 +59,10 @@ function get_game_content($post_id) {
     $content = '';
     if($started == '') {
         //echo '<div class="notice shadow">Buzzers ready, we&rsquo;re waiting for the game to start!</div>';
-        $content .= '<div class="question-text">The game has not started</div>';
+        $content .= '<div class="question-text awaiting-start">The game has not started</div>';
         
         if($peril_uuid > 0) {
-            if(is_audience_member()) {
+            if(is_audience_member($post_id)) {
                 //do nothing, we're waiting
             } else if(in_array($peril_uuid, $players)) {
                 $name = get_post_meta($post_id, "peril_player_name_$peril_uuid", true);
@@ -86,15 +87,15 @@ function get_game_content($post_id) {
             
             //$content .= '<p class="peril-white">If you&rsquo;re a competitor, please wait for the host start game.</p>';
         } else {
-            if(!is_audience_member()) {
+            if(!is_audience_member($post_id) && $requires_login == 1) {
                 $content .= show_login_link();
             }
         }
         
-        if($peril_uuid == 0 && !is_audience_member()) {
+        if($peril_uuid == 0 && !is_audience_member($post_id)) {
             $content .= '<button id="audience-member" class="peril-button">Join as an audience member</button>';
         }
-    } if($host == '') {
+    } else if($host == '') {
         $content .= '<p>The host has left the game.</p>';
         if(!in_array($peril_uuid, $players)) {
             $content .= '<button class="peril-button" id="claim-host">Join as host</button>';
@@ -141,7 +142,8 @@ function show_started_game($post_id) {
             if($current_action != '') {
                 $show_buttons = true;
                 $ignore_actions = array(
-                    'show_clue'
+                    'show_clue',
+                    'daily_double'
                 );
                 if(in_array($current_action, $ignore_actions)) {
                     $show_buttons = false;
@@ -157,10 +159,15 @@ function show_started_game($post_id) {
             $content .= '<div class="host-actions '.$actions_active.'">';
                 $actions = array(
                     'show_scores' => 'Show Scores',
-                    'display_game_board' => 'Show Board'
+                    'display_game_board' => 'Show Board',
+                    'goto_round_1' => 'Go to round 1',
+                    'goto_round_2' => 'Go to round 2',
+                    'goto_round_3' => 'Go to round 3',
                 );
                 if($current_action != '') {
-                    $content .= '<div class="host-action" data-action="resume_game">Resume Game</div>';    
+                    if(!in_array($current_action, $ignore_actions)) {
+                        $content .= '<div class="host-action" data-action="resume_game">Resume Game</div>';    
+                    }
                 }
                 foreach($actions as $k => $v) {
                     $content .= '<div class="host-action';
@@ -182,13 +189,13 @@ function show_started_game($post_id) {
             $content .= '<div class="show-score-toggle contestant">scores</div>';
             $content .= get_player_scores($players, $post_id, 'public inactive');
         } else {
-            if(!is_audience_member()) {
+            if(!is_audience_member($post_id)) {
                // $content .= '<button id="audience-member" class="peril-button">Join as an audience member</button>';
             }
         }
     } 
     if(!$found_player) {
-        if(is_audience_member()) {
+        if(is_audience_member($post_id)) {
             $content .= get_screen_content($post_id, $current_action, 'audience_member');
             //show scores
             $content .= get_player_scores($players, $post_id, 'public inactive');
@@ -205,6 +212,7 @@ function get_screen_content($game_id, $current_action, $player_type) {
     $content = '';
     $current_round = get_game_round($game_id);
     if($current_action != '') {
+        $board_array = maybe_unserialize(get_post_meta($game_id, 'peril_game_board', true));
         $answering = 'no-answer';
         $currently_answering = get_post_meta($game_id, 'peril_player_answering', true);
         if($currently_answering != '') {
@@ -212,6 +220,21 @@ function get_screen_content($game_id, $current_action, $player_type) {
             $uuid = get_peril_uuid();
             if($uuid == $currently_answering) {
                 $answering .= ' current-player-answering';
+            }
+        }
+        if($current_action == 'show_clue' || $current_action == 'daily_double') {
+            $category = get_post_meta($game_id, 'peril_current_category', true);
+            $value = get_post_meta($game_id, 'peril_current_value', true);
+            $concat = "$category:$value";
+            //get double jeopardy question(s)
+            $dbl_jeopardy = get_post_meta($game_id, "round_{$current_round}_double_jeopardy");
+            if(in_array($concat, $dbl_jeopardy)) {
+                $answering = 'player-answering';
+                $uuid = get_peril_uuid();
+                $previously_answering = get_post_meta($game_id, 'peril_last_player', true);
+                if($uuid == $previously_answering) {
+                    $answering .= ' current-player-answering';
+                }
             }
         }
         $content .= '<div class="game-action '.$player_type.' '.$current_action.' '.$answering.'">';
@@ -234,10 +257,50 @@ function get_screen_content($game_id, $current_action, $player_type) {
                 $content .= display_game_board($game_id, $current_round);
                 break;
             case 'show_clue':
-                $round = 
-                $category = get_post_meta($game_id, 'peril_current_category', true);
-                $value = get_post_meta($game_id, 'peril_current_value', true);
-                $board_array = maybe_unserialize(get_post_meta($game_id, 'peril_game_board', true));
+                if(in_array($concat, $dbl_jeopardy)) {
+                    $content .= '<div class="question-text">Daily Double!</div>';
+                    if($player_type == 'host') {
+                        $player_name = get_post_meta($game_id, "peril_player_name_$previously_answering", true);
+                        $content .= '<div>Contestant guessing: '.$player_name.'</div>';
+                        $player_score = get_post_meta($game_id, "peril_player_{$previously_answering}_score", true);
+                        $content .= '<div>Current score: $'.$player_score.'</div>';
+                        if($current_round == 1) {
+                            if($player_score < 1000) {
+                                $player_score = 1000;
+                            }
+                        } else if ($current_round == 2) {
+                            if($player_score < 2000) {
+                                $player_score = 2000;
+                            }
+                        }
+                        $content .= '<div>Available to wager: $'.$player_score.'</div>';
+                        //$category = array_search($board_array[$current_round][$category]);
+                        $content .= '<div>Category: '.$category.'</div>';
+                        $content .= '<div class="peril-form-field row wager"><input type="text" placeholder="Wager" id="input-wager" data-max="'.$player_score.'" /><button class="peril-button" id="submit-wager">Set Wager</button>';
+                    }
+                } else {
+                    if(isset($board_array[$current_round][$category][$value])) {
+                        if($player_type == 'host') {
+                            $content .= $category.': $'.$value;
+                        }
+                        $content .= '<div class="question-text">'.$board_array[$current_round][$category][$value]['answer'].'</div>';
+                        if($player_type == 'host') {
+                            $content .= '<div>'.$board_array[$current_round][$category][$value]['question'].'</div>';
+                            if($currently_answering != '') {
+                                $player_name = get_post_meta($game_id, "peril_player_name_$currently_answering", true);
+                                $content .= 'Contestant guessing: '.$player_name;
+                                $content .= '<div class="host-answer-responses">';
+                                    $content .= '<button class="peril-button correct" data-value="correct">Correct</button>';
+                                    $content .= '<button class="peril-button incorrect" data-value="incorrect">Incorrect</button>';
+                                $content .= '</div>';
+                            }
+                        }
+                    }
+                }
+                
+               // $content .= display_game_board($game_id, $current_round);
+                break;
+            case 'daily_double':
                 if(isset($board_array[$current_round][$category][$value])) {
                     if($player_type == 'host') {
                         $content .= $category.': $'.$value;
@@ -245,7 +308,9 @@ function get_screen_content($game_id, $current_action, $player_type) {
                     $content .= '<div class="question-text">'.$board_array[$current_round][$category][$value]['answer'].'</div>';
                     if($player_type == 'host') {
                         $content .= '<div>'.$board_array[$current_round][$category][$value]['question'].'</div>';
-                        if($currently_answering != '') {
+                        if($previously_answering != '') {
+                            $player_name = get_post_meta($game_id, "peril_player_name_$previously_answering", true);
+                            $content .= 'Contestant guessing: '.$player_name;
                             $content .= '<div class="host-answer-responses">';
                                 $content .= '<button class="peril-button correct" data-value="correct">Correct</button>';
                                 $content .= '<button class="peril-button incorrect" data-value="incorrect">Incorrect</button>';
@@ -253,8 +318,6 @@ function get_screen_content($game_id, $current_action, $player_type) {
                         }
                     }
                 }
-                
-               // $content .= display_game_board($game_id, $current_round);
                 break;
         }
         $content .= '</div>';
@@ -373,8 +436,12 @@ function display_game_board($game_id, $game_round = 1) {
     if(!is_array($used_answers_array)) {
         $used_answers_array = array();
     }
-    $board_array = '';
-    if($board_array == '') {
+    //$board_array = ''; //for testing
+    $content = '';
+    if($board_array == '' || (is_array($board_array) && empty($board_array))) {
+        delete_post_meta($game_id, 'round_1_double_jeopardy');
+        delete_post_meta($game_id, 'round_2_double_jeopardy');
+        delete_post_meta($game_id, 'round_3_double_jeopardy');
         // board hasnt been created
         $game_csv = get_post_meta($game_id, 'peril_game_csv', true);
         if($game_csv == '') {
@@ -403,45 +470,70 @@ function display_game_board($game_id, $game_round = 1) {
         }
         fclose($f);
         update_post_meta($game_id, 'peril_game_board', maybe_serialize($board_array));
-    } 
-    $content = '<div class="game-board round-'.$game_round.'">';
-        if($game_round == 3) {
-            //$content .= '<span class="answer"><span class="prompt">'.$v['answer'].'</span>'.$v['question'].'</span>';
-            //$content .= '<span class="answer"><span class="prompt">'.$board_array[$game_round]['answer'].'</span></span>';
-            foreach($board_array[$game_round] as $category => $array) {
-                $content .= '<div class="round-column" data-category="'.$category.'">';
-                foreach($array as $k => $v) {
-                    $content .= '<div data-category="'.$category.'" data-value=""><span class="question-text">'.$v['answer'].'</span>';
-                    $content .= '</div>';
-                }
-                $content .= '</div>';
-            }
-        } else {
-
-            foreach($board_array[$game_round] as $category => $array) {
-                $content .= '<div class="category">'.$category.'</div>';   
-            }
-            foreach($board_array[$game_round] as $category => $array) {
-                $content .= '<div class="round-column" data-category="'.$category.'">';
-                foreach($array as $k => $v) {
-                    $question_status = 'available';
-                    if(isset($used_answers_array[$category])) {
-                        if(in_array($k, $used_answers_array[$category])) {
-                            $question_status = 'unavailable';
-                        }
-
-                    }
-                    $content .= '<div class="round-question '.$question_status.'" data-category="'.$category.'" data-value="'.$k.'"><span class="value">$'.$k.'</span>';
-                    if($question_status == 'unavailable') {
-                            $content .= '<span class="answer"><span class="prompt">'.$v['answer'].'</span>'.$v['question'].'</span>';
-                    }
-                    $content .= '</div>';
-                }
-                $content .= '</div>';
-            }
+        if(isset($board_array["1"])) {
+            $category = array_rand($board_array["1"]); //here yoy get random first of array(green or red or yellow)
+            $value = array_search($board_array["1"][$category][array_rand($board_array["1"][$category])],$board_array["1"][$category]);
+            add_post_meta( $game_id, "round_1_double_jeopardy", "$category:$value" );
         }
-       
-    $content .= '</div>';
+        if(isset($board_array["2"])) {
+            $category = array_rand($board_array["2"]); //here yoy get random first of array(green or red or yellow)
+            $value = array_search($board_array["2"][$category][array_rand($board_array["2"][$category])],$board_array["2"][$category]);
+            $dbl_1 = "$category:$value";
+            add_post_meta( $game_id, "round_2_double_jeopardy", "$dbl_1" );
+            $found_unique = false;
+            while(!$found_unique) {
+                $category = array_rand($board_array["2"]); //here yoy get random first of array(green or red or yellow)
+                $value = array_search($board_array["2"][$category][array_rand($board_array["2"][$category])],$board_array["2"][$category]);
+                $dbl_2 = "$category:$value";
+                if($dbl_1 != $dbl_2) {
+                    $found_unique = true;
+                }
+            }
+            add_post_meta( $game_id, "round_2_double_jeopardy", "$dbl_2" );
+        }
+    } 
+    if(isset($board_array[$game_round])) {
+        $content .= '<div class="game-board round-'.$game_round.'">';
+            if($game_round == 3) {
+                //$content .= '<span class="answer"><span class="prompt">'.$v['answer'].'</span>'.$v['question'].'</span>';
+                //$content .= '<span class="answer"><span class="prompt">'.$board_array[$game_round]['answer'].'</span></span>';
+                foreach($board_array[$game_round] as $category => $array) {
+                    $content .= '<div class="round-column" data-category="'.$category.'">';
+                    foreach($array as $k => $v) {
+                        $content .= '<div data-category="'.$category.'" data-value=""><span class="question-text">'.$v['answer'].'</span>';
+                        $content .= '</div>';
+                    }
+                    $content .= '</div>';
+                }
+            } else {
+
+                foreach($board_array[$game_round] as $category => $array) {
+                    $content .= '<div class="category">'.$category.'</div>';   
+                }
+                foreach($board_array[$game_round] as $category => $array) {
+                    $content .= '<div class="round-column" data-category="'.$category.'">';
+                    foreach($array as $k => $v) {
+                        $question_status = 'available';
+                        if(isset($used_answers_array[$category])) {
+                            if(in_array($k, $used_answers_array[$category])) {
+                                $question_status = 'unavailable';
+                            }
+
+                        }
+                        $content .= '<div class="round-question '.$question_status.'" data-category="'.$category.'" data-value="'.$k.'"><span class="value">$'.$k.'</span>';
+                        if($question_status == 'unavailable') {
+                                $content .= '<span class="answer"><span class="prompt">'.$v['answer'].'</span>'.$v['question'].'</span>';
+                        }
+                        $content .= '</div>';
+                    }
+                    $content .= '</div>';
+                }
+            }
+        
+        $content .= '</div>';
+    } else {
+        $content .= '<div>There is no content for this round!</div>';
+    }
     return $content;
 }
 
