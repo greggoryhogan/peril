@@ -159,10 +159,6 @@ function show_started_game($post_id) {
             $content .= '<div class="host-actions '.$actions_active.'">';
                 $actions = array(
                     'show_scores' => 'Show Scores',
-                    'display_game_board' => 'Show Board',
-                    'goto_round_1' => 'Go to round 1',
-                    'goto_round_2' => 'Go to round 2',
-                    'goto_round_3' => 'Go to round 3',
                 );
                 if($current_action != '') {
                     if(!in_array($current_action, $ignore_actions)) {
@@ -176,7 +172,29 @@ function show_started_game($post_id) {
                     }
                     $content .= '" data-action="'.$k.'">'.$v.'</div>';
                 }
-                
+                $current_round = get_game_round($post_id);
+                $actions = array(
+                    'goto_round_1' => 'Go to round 1',
+                    'goto_round_2' => 'Go to round 2',
+                    'goto_round_3' => 'Go to round 3',
+                );
+                $rounds = 0;
+                foreach($actions as $k => $v) {
+                    $rounds++;
+                    $content .= '<div class="host-action';
+                    if($rounds == $current_round) {
+                        $content .= ' inactive';
+                    }
+                    $content .= '" data-action="'.$k.'">'.$v.'</div>';
+                }
+                if($current_round == 3) {
+                    $k = 'show_final_jeopardy';
+                    $content .= '<div class="host-action';
+                    if($k == $current_action) {
+                        $content .= ' inactive';
+                    }
+                    $content .= '" data-action="'.$k.'">Start Final Peril</div>';
+                }
                 
                 //$content .= '<div>'. get_player_scores($players, $post_id, 'host').'</div>';
             $content .= '</div>';
@@ -285,7 +303,7 @@ function get_screen_content($game_id, $current_action, $player_type) {
                         }
                         $content .= '<div class="question-text">'.$board_array[$current_round][$category][$value]['answer'].'</div>';
                         if($player_type == 'host') {
-                            $content .= '<div>'.$board_array[$current_round][$category][$value]['question'].'</div>';
+                            $content .= '<div>Answer: '.$board_array[$current_round][$category][$value]['question'].'</div>';
                             if($currently_answering != '') {
                                 $player_name = get_post_meta($game_id, "peril_player_name_$currently_answering", true);
                                 $content .= 'Contestant guessing: '.$player_name;
@@ -497,14 +515,50 @@ function display_game_board($game_id, $game_round = 1) {
             if($game_round == 3) {
                 //$content .= '<span class="answer"><span class="prompt">'.$v['answer'].'</span>'.$v['question'].'</span>';
                 //$content .= '<span class="answer"><span class="prompt">'.$board_array[$game_round]['answer'].'</span></span>';
-                foreach($board_array[$game_round] as $category => $array) {
+                /*foreach($board_array[$game_round] as $category => $array) {
                     $content .= '<div class="round-column" data-category="'.$category.'">';
                     foreach($array as $k => $v) {
                         $content .= '<div data-category="'.$category.'" data-value=""><span class="question-text">'.$v['answer'].'</span>';
                         $content .= '</div>';
                     }
                     $content .= '</div>';
+                }*/
+                $key = array_key_first($board_array[$game_round]);
+                $content .= '<div class="question-text">';
+                if($key !== false) {
+                    $content .= $key;
+                } else {
+                    $content .= 'Oh no! There&rsquo;s no final clue!';
                 }
+                $content .= '</div>';
+                $host = get_post_meta($game_id, 'peril_game_host', true);
+                $players = get_post_meta($game_id, 'peril_game_players');
+                $peril_uuid = get_peril_uuid();
+                if(is_audience_member($game_id)) {
+                    //do nothing, we're waiting
+                } else if(in_array($peril_uuid, $players)) {
+                    $score = get_post_meta($game_id,"peril_player_{$peril_uuid}_score", true);
+                    if($score == '') {
+                        $score = 0;
+                    }
+                    if($score >= 0) {
+                        $scores = '$'.number_format($score, 0);
+                    } else {
+                        $score = $score * -1;
+                        $scores = '- $'.number_format($score, 0);
+                    }
+                    $content .= '<p>You have '.$scores.' to wager.</p>';
+                    if($score == 0) {
+                        $content .= '<p>Sorry, you don&rsquo;t have enough points to continue</p>';
+                    } else {
+                        $content .= '<div><p>Please enter your final wager</p></div>';
+                    }
+                } else {
+                    if($host == $peril_uuid) {
+                        $content .= '<p>When all players have submitted their wagers, go to the game options and start Final Peril</p>';
+                    }
+                }
+                
             } else {
 
                 foreach($board_array[$game_round] as $category => $array) {

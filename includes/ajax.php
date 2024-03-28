@@ -122,8 +122,16 @@ function host_action() {
     $game_id = absint($_POST['game_id']);
     $game_action = sanitize_text_field($_POST['game_action']);
     if($game_action == 'resume_game') {
-        delete_post_meta($game_id,'peril_game_action');
+        $previous_action = get_post_meta($game_id, 'peril_previous_action', true);
+        if($previous_action != '') {
+            update_post_meta($game_id,'peril_game_action', $previous_action);
+            delete_post_meta($game_id,'peril_previous_action');
+        } else {
+            delete_post_meta($game_id,'peril_game_action');
+        }
     } else {
+        $previous_action = get_post_meta($game_id, 'peril_game_action', true);
+        update_post_meta($game_id,'peril_previous_action', $previous_action);
         update_post_meta($game_id,'peril_game_action', $game_action);
         if($game_action == 'show_clue') {
             $category = sanitize_text_field( $_POST['category'] );

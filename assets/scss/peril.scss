@@ -146,7 +146,6 @@ $gray: #1c1e2a;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            background: $blue;
             @media (min-width: $mobile) {
                 max-width: 33%;
             }
@@ -217,8 +216,25 @@ $gray: #1c1e2a;
             grid-template-rows: auto;
             
         }
+        &:not(.host) {
+            > div {
+                user-select: none;
+            }
+        }
         border: 10px solid #04080e;
         background: #04080e;
+        &.round-3 {
+            background: $blue;
+            border: none;
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            height: 100%;
+            align-items: center;
+            p {
+                max-width: 90%;
+            }
+        }
         gap: 12px;
         margin: -3vw;
         @media (min-width:$mobile) {
@@ -317,6 +333,20 @@ $gray: #1c1e2a;
                 &:hover {
                     .answer {
                         display: flex;
+                        background: $blue;
+                        height: auto;
+                        min-height: calc(100% + 20px);
+                        top: 50%;
+                        transform: translateY(-50%);
+                        border-top: 10px solid #04080e;
+                        border-bottom: 10px solid #04080e;
+                        box-sizing: border-box;
+                        @media (max-width: 767px) {
+                            .prompt {
+                                padding-bottom: 10px;
+                            }
+                            padding-bottom: 20px;
+                        }
                     }
                 }
             }
@@ -504,8 +534,8 @@ $gray: #1c1e2a;
     left: 0;
     width: 100%;
     height: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 20px;
     padding: 3vw;
     box-sizing: border-box;
@@ -537,13 +567,15 @@ $gray: #1c1e2a;
     left: 0;
     width: 100%;
     height: 100%;
-    @media (max-width: $mobile) {
-        position: fixed;
-        height: 100%;
-        top: 0;
-        bottom: auto;
-        overflow: auto;
-        display: block;
+    &:not(.show_clue) {
+        @media (max-width: $mobile) {
+            position: fixed;
+            height: 100%;
+            top: 0;
+            bottom: auto;
+            overflow: auto;
+            display: block;
+        }
     }
     padding: 3vw;
     box-sizing: border-box;
@@ -556,6 +588,12 @@ $gray: #1c1e2a;
     }
     &.current-player-answering {
         background: #138510;
+    }
+    &.host {
+        .question-text {
+            font-size: 66px;
+            line-height: 70px;
+        }
     }
     .host-answer-responses {
         display: flex;
