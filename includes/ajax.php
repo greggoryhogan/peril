@@ -159,6 +159,18 @@ function host_action() {
 add_action("wp_ajax_host_action", "host_action");
 add_action("wp_ajax_nopriv_host_action", "host_action");
 
+function show_guesses() {
+    $game_id = absint($_POST['game_id']);
+    update_post_meta($game_id,'peril_game_action', 'end_final_jeopardy_guesses');
+    $game_version = update_game_version($game_id);
+    wp_send_json(array(
+        'game_content' => get_game_content($game_id),
+        'game_version' => $game_version
+    ));
+}
+add_action("wp_ajax_show_guesses", "show_guesses");
+add_action("wp_ajax_nopriv_show_guesses", "show_guesses");
+
 
 function peril_upload_file() {
     $uploads_dir = wp_upload_dir();
@@ -358,3 +370,79 @@ function set_daily_double() {
 }
 add_action("wp_ajax_set_daily_double", "set_daily_double");
 add_action("wp_ajax_nopriv_set_daily_double", "set_daily_double");
+
+function update_player_score() {
+    $game_id = absint($_POST['game_id']);
+    $player = sanitize_text_field($_POST['player']);
+    $score = absint($_POST['score']);
+    update_post_meta($game_id, "peril_player_{$player}_score", $score);
+    $game_version = update_game_version($game_id);
+    wp_send_json(
+        array(
+            'game_version' => $game_version,
+            'game_content' => get_game_content($game_id),
+        )
+    );
+}
+add_action("wp_ajax_update_player_score", "update_player_score");
+add_action("wp_ajax_nopriv_update_player_score", "update_player_score");
+
+function check_player_wagers() {
+    $game_id = absint($_POST['game_id']);
+    $players = get_post_meta($game_id, 'peril_game_players');
+    $wagers = '';
+    foreach($players as $player) {
+        $wager = get_post_meta($game_id,"peril_player_{$player}_wager", true);
+        if ($wager == '') {
+            $wager = 'Not set';
+        }
+        $score = get_post_meta($game_id,"peril_player_{$player}_score", true);
+        if($score == '') {
+            $score = 0;
+        }
+        $username = get_post_meta($game_id, "peril_player_name_$player", true);
+        $wagers .= '<div><div>'.$username.'</div><div>Score: '.$score.'</div><div>Wager: '.$wager.'</div></div>';
+    }
+    wp_send_json(
+        array(
+            'wagers' => $wagers
+        )
+    );
+}
+add_action("wp_ajax_check_player_wagers", "check_player_wagers");
+add_action("wp_ajax_nopriv_check_player_wagers", "check_player_wagers");
+
+function set_final_wager() {
+    $game_id = absint($_POST['game_id']);
+    $player = sanitize_text_field($_POST['player']);
+    $wager = absint($_POST['wager']);
+    $score = get_post_meta($game_id,"peril_player_{$player}_score", true);
+    if($wager > $score) {
+        $wager = $score;
+    }
+    update_post_meta($game_id, "peril_player_{$player}_wager", $wager);
+    $current_version = get_game_version($game_id);
+    wp_send_json(
+        array(
+            'game_version' => $current_version,
+            'game_content' => get_game_content($game_id)
+        )
+    );
+}
+add_action("wp_ajax_set_final_wager", "set_final_wager");
+add_action("wp_ajax_nopriv_set_final_wager", "set_final_wager");
+
+function set_final_guess() {
+    $game_id = absint($_POST['game_id']);
+    $player = sanitize_text_field($_POST['player']);
+    $guess = sanitize_text_field($_POST['guess']);
+    update_post_meta($game_id, "peril_player_{$player}_final_guess", $guess);
+    $current_version = get_game_version($game_id);
+    wp_send_json(
+        array(
+            'game_version' => $current_version,
+        )
+    );
+}
+add_action("wp_ajax_set_final_guess", "set_final_guess");
+add_action("wp_ajax_nopriv_set_final_guess", "set_final_guess");

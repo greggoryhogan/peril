@@ -143,7 +143,9 @@ function show_started_game($post_id) {
                 $show_buttons = true;
                 $ignore_actions = array(
                     'show_clue',
-                    'daily_double'
+                    'daily_double',
+                    'show_final_jeopardy',
+                    'end_final_jeopardy_guesses',
                 );
                 if(in_array($current_action, $ignore_actions)) {
                     $show_buttons = false;
@@ -157,45 +159,59 @@ function show_started_game($post_id) {
             $content .= get_screen_content($post_id, $current_action, 'host');
             $content .= '<div class="show-host-toggle '.$toggle_active .'">Game Options</div>';
             $content .= '<div class="host-actions '.$actions_active.'">';
-                $actions = array(
-                    'show_scores' => 'Show Scores',
-                );
-                if($current_action != '') {
-                    if(!in_array($current_action, $ignore_actions)) {
-                        $content .= '<div class="host-action" data-action="resume_game">Resume Game</div>';    
+                $content .= '<div class="action-list">';
+                    $actions = array(
+                        'show_scores' => 'Show Scores',
+                    );
+                    if($current_action != '') {
+                        if(!in_array($current_action, $ignore_actions)) {
+                            $content .= '<div class="host-action" data-action="resume_game">Resume Game</div>';    
+                        }
                     }
-                }
-                foreach($actions as $k => $v) {
-                    $content .= '<div class="host-action';
-                    if($k == $current_action) {
-                        $content .= ' inactive';
+                    foreach($actions as $k => $v) {
+                        $content .= '<div class="host-action';
+                        if($k == $current_action) {
+                            $content .= ' inactive';
+                        }
+                        $content .= '" data-action="'.$k.'">'.$v.'</div>';
                     }
-                    $content .= '" data-action="'.$k.'">'.$v.'</div>';
-                }
-                $current_round = get_game_round($post_id);
-                $actions = array(
-                    'goto_round_1' => 'Go to round 1',
-                    'goto_round_2' => 'Go to round 2',
-                    'goto_round_3' => 'Go to round 3',
-                );
-                $rounds = 0;
-                foreach($actions as $k => $v) {
-                    $rounds++;
-                    $content .= '<div class="host-action';
-                    if($rounds == $current_round) {
-                        $content .= ' inactive';
+                    $current_round = get_game_round($post_id);
+                    $actions = array(
+                        'goto_round_1' => 'Go to round 1',
+                        'goto_round_2' => 'Go to round 2',
+                        'goto_round_3' => 'Go to round 3',
+                    );
+                    $rounds = 0;
+                    foreach($actions as $k => $v) {
+                        $rounds++;
+                        $content .= '<div class="host-action';
+                        if($rounds == $current_round) {
+                            $content .= ' inactive';
+                        }
+                        $content .= '" data-action="'.$k.'">'.$v.'</div>';
                     }
-                    $content .= '" data-action="'.$k.'">'.$v.'</div>';
-                }
-                if($current_round == 3) {
-                    $k = 'show_final_jeopardy';
-                    $content .= '<div class="host-action';
-                    if($k == $current_action) {
-                        $content .= ' inactive';
+                    if($current_round == 3) {
+                        $k = 'show_final_jeopardy';
+                        $content .= '<div class="host-action';
+                        if($k == $current_action) {
+                            $content .= ' inactive';
+                        }
+                        $content .= '" data-action="'.$k.'">Start Final Peril</div>';
                     }
-                    $content .= '" data-action="'.$k.'">Start Final Peril</div>';
-                }
-                
+                $content .= '</div>';
+                $content .= '<div class="score-adjustments">';
+                    foreach($players as $player) {
+                        $score = get_post_meta($post_id,"peril_player_{$player}_score", true);
+                        if($score == '') {
+                            $score = 0;
+                        }
+                        $username = get_post_meta($post_id, "peril_player_name_$player", true);
+                        $content .= '<div class="score"><div class="name">'.$username.'</div>';
+                        $content .= '<input type="text" class="new-score" value="'.$score.'" />';
+                        $content .= '<button class="update-score peril-button" data-player="'.$player.'">Update Score</button>';
+                        $content .= '</div>';
+                    }
+                $content .= '<div class="score-adjustments">';
                 //$content .= '<div>'. get_player_scores($players, $post_id, 'host').'</div>';
             $content .= '</div>';
             //show scores
@@ -229,13 +245,14 @@ function show_started_game($post_id) {
 function get_screen_content($game_id, $current_action, $player_type) {
     $content = '';
     $current_round = get_game_round($game_id);
+    $uuid = get_peril_uuid();
     if($current_action != '') {
         $board_array = maybe_unserialize(get_post_meta($game_id, 'peril_game_board', true));
         $answering = 'no-answer';
         $currently_answering = get_post_meta($game_id, 'peril_player_answering', true);
         if($currently_answering != '') {
             $answering = 'player-answering';
-            $uuid = get_peril_uuid();
+            
             if($uuid == $currently_answering) {
                 $answering .= ' current-player-answering';
             }
@@ -248,13 +265,13 @@ function get_screen_content($game_id, $current_action, $player_type) {
             $dbl_jeopardy = get_post_meta($game_id, "round_{$current_round}_double_jeopardy");
             if(in_array($concat, $dbl_jeopardy)) {
                 $answering = 'player-answering';
-                $uuid = get_peril_uuid();
                 $previously_answering = get_post_meta($game_id, 'peril_last_player', true);
                 if($uuid == $previously_answering) {
                     $answering .= ' current-player-answering';
                 }
             }
         }
+        
         $content .= '<div class="game-action '.$player_type.' '.$current_action.' '.$answering.'">';
         switch($current_action) {
             case 'starting_game':
@@ -336,6 +353,60 @@ function get_screen_content($game_id, $current_action, $player_type) {
                         }
                     }
                 }
+                break;
+            case 'show_final_jeopardy':
+            case 'end_final_jeopardy_guesses':
+                $key = array_key_first($board_array[$current_round]);
+                
+                if($key !== false) {
+                    if($player_type == 'host') {
+                        $content .= $key;
+                    }
+                    if(isset($board_array[$current_round][$key])) {
+                        if($player_type == 'host') {
+                           // $content .= $category.': $'.$value;
+                        }
+                        $second_key = array_key_first($board_array[$current_round][$key]);
+                        if($second_key !== false) {
+                            if(isset($board_array[$current_round][$key][$second_key])) {
+                                $answer = $board_array[$current_round][$key][$second_key]['answer'];
+                                $content .= '<div class="question-text">'.$answer.'</div>';
+                            }
+                        } 
+                    }
+                    $players = get_post_meta($game_id, 'peril_game_players');
+                    if($current_action == 'show_final_jeopardy') {
+                        if(in_array($uuid, $players)) {
+                            $content .= '<div class="final-input-container">';
+                                $guess = get_post_meta($game_id,"peril_player_{$uuid}_final_guess", true);
+                                $content .= '<textarea class="final-guess" rows="1">'.$guess.'</textarea>';
+                                $content .= '<button class="peril-button set-my-guess">Set Response</button>';
+                                $content .= '<div class="guess-response-feedback"></div>';
+                            $content .= '</div>';
+                        } else if($player_type == 'host') {
+                            $content .= '<div class="peril-button" id="show_guesses">Show Player Guesses</button>';
+                        }
+                    } else {
+                        //were showing guesses
+                        if($player_type == 'host') {
+                            $content .= '<div class="player-results">';
+                            foreach($players as $player) {
+                                $score = get_post_meta($game_id,"peril_player_{$player}_score", true);
+                                $wager = get_post_meta($game_id, "peril_player_{$player}_wager", true);
+                                $username = get_post_meta($game_id, "peril_player_name_$player", true);
+                                echo '<div class="player-guess"><div>'.$username.'</div><div>Score: '.$score.'</div><div>Wager: '.$wager.'</div></div>';
+                            }
+                            $content .= '</div>';
+                        }
+                    }
+                    
+                } else {
+                    //$content .= 'Oh no! There&rsquo;s no final clue!';
+                }
+                
+                
+                
+                // $content .= display_game_board($game_id, $current_round);
                 break;
         }
         $content .= '</div>';
@@ -478,7 +549,15 @@ function display_game_board($game_id, $game_round = 1) {
                 $category = $line[1];
                 $answer = $line[2];
                 $question = $line[3];
-                $value = $line[4];
+                if(isset($line[4])) {
+                    $value = $line[4];
+                } else {
+                    $value = 0;
+                }
+                if($value == '') {
+                    $value = 0;
+                }
+                
                 $board_array["$round"]["$category"]["$value"] = array(
                     'answer' => $answer,
                     'question' => $question
@@ -552,10 +631,20 @@ function display_game_board($game_id, $game_round = 1) {
                         $content .= '<p>Sorry, you don&rsquo;t have enough points to continue</p>';
                     } else {
                         $content .= '<div><p>Please enter your final wager</p></div>';
+                        $content .= '<div class="final-input-container">';
+                            $wager = get_post_meta($game_id,"peril_player_{$peril_uuid}_wager", true);
+                            if($wager == '') {
+                                $wager = 0;
+                            }
+                            $content .= '<input type="text" class="wager-value" placeholder="'.$wager.'" />';
+                            $content .= '<button class="peril-button set-my-wager">Set Wager</button>';
+                        $content .= '</div>';
                     }
                 } else {
                     if($host == $peril_uuid) {
                         $content .= '<p>When all players have submitted their wagers, go to the game options and start Final Peril</p>';
+                        $content .= '<button class="peril-button" id="check-player-wagers">Check Wagers</button>';
+                        $content .= '<div id="wagers-response"></div>';
                     }
                 }
                 

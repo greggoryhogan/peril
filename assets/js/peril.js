@@ -39,6 +39,20 @@
         });
     }
 
+    //Autoresize final textarea
+    if($('.final-guess').length) {
+        textarea = document.querySelector(".final-guess");
+        textarea.addEventListener('input', autoResize, false);
+        function autoResize() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        }
+        $('.final-guess').each(function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+    }
+
     $(document).on('click','#peril-login',function(e){
         e.preventDefault();
         $('#login-modal').addClass('is-active');
@@ -179,7 +193,7 @@
         if($('.awaiting-start').length) {
             return;
         }
-        if(player_type == 'contestant' && !$('.game-action.show_clue').hasClass('player-answering')) {
+        if(player_type == 'contestant' && !$('.game-action').hasClass('show_final_jeopardy') && !$('.game-action.show_clue').hasClass('player-answering') && !$('.game-board').hasClass('round-3')) {
             e.preventDefault();
             processing_request = true;
             $.ajax({
@@ -239,6 +253,46 @@
         $('.host-actions').toggleClass('inactive');
       });
 
+      $(document).on('click', '.update-score', function(e){
+        e.preventDefault();
+        var player = $(this).attr('data-player');
+        var score = $(this).parent().find('.new-score').val();
+        processing_request = true;
+        $.ajax({
+            url: peril.ajax_url,
+            type: 'post',
+            data: {
+                action : 'update_player_score',
+                game_id : peril.game_id,
+                player : player,
+                score : score
+            },
+            success: function(response) {
+                processing_request = false;
+                game_version = response.game_version;
+                $('#game-content').html(response.game_content);
+            }
+        });
+      });
+
+      $(document).on('click', '#check-player-wagers', function(e){
+        e.preventDefault();
+        $('#wagers-response').html('');
+        processing_request = true;
+        $.ajax({
+            url: peril.ajax_url,
+            type: 'post',
+            data: {
+                action : 'check_player_wagers',
+                game_id : peril.game_id,
+            },
+            success: function(response) {
+                processing_request = false;
+                $('#wagers-response').html(response.wagers);
+            }
+        });
+      });
+
       $(document).on('click','.host-answer-responses button',function(e) {
         if(player_type == 'host') {
             e.preventDefault();
@@ -281,6 +335,27 @@
         });
       });
 
+      $(document).on('click','#show_guesses',function(e) {
+        e.preventDefault();
+        processing_request = true;
+        var game_action = 'end_final_jeopardy_guesses';
+        $.ajax({
+            url: peril.ajax_url,
+            type: 'post',
+            data: {
+                action : 'host_action',
+                game_id : peril.game_id,
+                game_action : game_action
+            },
+            success: function(response) {
+                processing_request = false;
+                game_version = response.game_version;
+                $('#game-content').html(response.game_content);
+            }
+        });
+      });
+
+      //daily double
       $(document).on('click', '#submit-wager', function(e) {
         e.preventDefault();
         processing_request = true;
@@ -303,6 +378,76 @@
                 $('#game-content').html(response.game_content);
             }
         });
+      });
+
+      //final peril wager
+      $(document).on('click', '.set-my-wager', function(e) {
+        e.preventDefault();
+        if(!processing_request) {
+            $('.set-my-wager').text('Setting Wager').addClass('action-loading');
+            processing_request = true;
+            var wager = $(this).parent().find('.wager-value');
+            var val = wager.val();
+            if(val == '') {
+                val = wager.attr('placeholder');
+            }
+            $.ajax({
+                url: peril.ajax_url,
+                type: 'post',
+                data: {
+                    action : 'set_final_wager',
+                    game_id : peril.game_id,
+                    player : uuid,
+                    wager : val,
+                },
+                success: function(response) {
+                    processing_request = false;
+                    game_version = response.game_version;
+                    $('#game-content').html(response.game_content);
+                }
+            });
+        }
+      });
+
+      //final peril answer
+      $(document).on('click', '.set-my-guess', function(e) {
+        e.preventDefault();
+        if(!processing_request) {
+            $('.set-my-guess').text('Updating').addClass('action-loading');
+            $('.guess-response-feedback').html('');
+            processing_request = true;
+            var answer = $(this).parent().find('.final-guess');
+            var val = answer.val();
+            if(val == '') {
+                val = answer.attr('placeholder');
+            }
+            //console.log(val);
+            $.ajax({
+                url: peril.ajax_url,
+                type: 'post',
+                data: {
+                    action : 'set_final_guess',
+                    game_id : peril.game_id,
+                    player : uuid,
+                    guess : val,
+                },
+                success: function(response) {
+                    processing_request = false;
+                    game_version = response.game_version;
+                    $('.set-my-guess').text('Set Response').removeClass('action-loading');
+                    $('.guess-response-feedback').html('Response recorded');
+                    //$('#game-content').html(response.game_content);
+                    /*textarea = document.querySelector(".final-guess");
+                    textarea.addEventListener('input', autoResize, false);
+                    function autoResize() {
+                        this.style.height = 'auto';
+                        this.style.height = this.scrollHeight + 'px';
+                    }
+                    textarea.autoResize();*/
+                    
+                }
+            });
+        }
       });
 
       $(document).on('click','#update-name',function(e) {
