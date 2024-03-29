@@ -727,6 +727,36 @@ $gray: #1c1e2a;
             width: 80%!important;
         }
     }
+    .player-results {
+        display: flex;
+        gap: 50px;
+        justify-content: center;
+        .player-guess {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            font-size: 20px;
+            padding: 20px;
+            border: 1px solid $blue;
+            &.current-player,
+            &:hover {
+                border: 1px solid #fff;
+            }
+        }
+        .peril-button {
+            padding: 5px 20px;
+            font-size: 24px;
+            border-radius: 4px;
+            margin: 8px 0;
+            &:hover {
+                background: $gray;
+                color: #fff;
+            }
+            &:last-of-type {
+                margin-bottom: 0;
+            }
+        }
+    }
     #show_guesses {
         align-self: center;
     }
@@ -762,4 +792,12 @@ $gray: #1c1e2a;
         display: block;
         margin-bottom: 24px;
     }
+}
+.script-font {
+    font-family: "lindsey-signature", sans-serif;
+}
+#show_winner {
+    align-self: center;
+    padding: 10px;
+    margin-top: 30px;
 }

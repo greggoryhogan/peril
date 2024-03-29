@@ -159,18 +159,6 @@ function host_action() {
 add_action("wp_ajax_host_action", "host_action");
 add_action("wp_ajax_nopriv_host_action", "host_action");
 
-function show_guesses() {
-    $game_id = absint($_POST['game_id']);
-    update_post_meta($game_id,'peril_game_action', 'end_final_jeopardy_guesses');
-    $game_version = update_game_version($game_id);
-    wp_send_json(array(
-        'game_content' => get_game_content($game_id),
-        'game_version' => $game_version
-    ));
-}
-add_action("wp_ajax_show_guesses", "show_guesses");
-add_action("wp_ajax_nopriv_show_guesses", "show_guesses");
-
 
 function peril_upload_file() {
     $uploads_dir = wp_upload_dir();
@@ -446,3 +434,33 @@ function set_final_guess() {
 }
 add_action("wp_ajax_set_final_guess", "set_final_guess");
 add_action("wp_ajax_nopriv_set_final_guess", "set_final_guess");
+
+function final_action() {
+    $game_id = absint($_POST['game_id']);
+    $player = sanitize_text_field($_POST['player']);
+    $action = sanitize_text_field($_POST['final_action']);
+    update_post_meta($game_id,'peril_game_action', $action);
+    update_post_meta($game_id,'peril_final_player_displaying',$player);
+    if($action == 'player_final_is_correct') {
+        $score = get_post_meta($game_id,"peril_player_{$player}_score", true);
+        $wager = get_post_meta($game_id, "peril_player_{$player}_wager", true);
+        $final_score = absint($score) + absint($wager);
+        update_post_meta($game_id,"peril_player_{$player}_score", $final_score);
+        update_post_meta($game_id,"peril_player_{$player}_done", 1);
+    } else if($action == 'player_final_is_incorrect') {
+        $score = get_post_meta($game_id,"peril_player_{$player}_score", true);
+        $wager = get_post_meta($game_id, "peril_player_{$player}_wager", true);
+        $final_score = absint($score) - absint($wager);
+        update_post_meta($game_id,"peril_player_{$player}_score", $final_score);
+        update_post_meta($game_id,"peril_player_{$player}_done", 1);
+    }
+    $game_version = update_game_version($game_id);
+    wp_send_json(
+        array(
+            'game_version' => $game_version,
+            'game_content' => get_game_content($game_id)
+        )
+    );
+}
+add_action("wp_ajax_final_action", "final_action");
+add_action("wp_ajax_nopriv_final_action", "final_action");

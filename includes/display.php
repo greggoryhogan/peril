@@ -146,6 +146,11 @@ function show_started_game($post_id) {
                     'daily_double',
                     'show_final_jeopardy',
                     'end_final_jeopardy_guesses',
+                    'show_player_final_guess',
+                    'show_player_final_wager',
+                    'player_final_is_correct',
+                    'player_final_is_incorrect',
+                    'show_winner'
                 );
                 if(in_array($current_action, $ignore_actions)) {
                     $show_buttons = false;
@@ -389,14 +394,8 @@ function get_screen_content($game_id, $current_action, $player_type) {
                     } else {
                         //were showing guesses
                         if($player_type == 'host') {
-                            $content .= '<div class="player-results">';
-                            foreach($players as $player) {
-                                $score = get_post_meta($game_id,"peril_player_{$player}_score", true);
-                                $wager = get_post_meta($game_id, "peril_player_{$player}_wager", true);
-                                $username = get_post_meta($game_id, "peril_player_name_$player", true);
-                                echo '<div class="player-guess"><div>'.$username.'</div><div>Score: '.$score.'</div><div>Wager: '.$wager.'</div></div>';
-                            }
-                            $content .= '</div>';
+                            $content .= show_final_player_score_actions($game_id, $players);
+                            $content .= '<button id="show_winner" class="peril-button">Show Winner</button>';
                         }
                     }
                     
@@ -407,6 +406,77 @@ function get_screen_content($game_id, $current_action, $player_type) {
                 
                 
                 // $content .= display_game_board($game_id, $current_round);
+                break;
+            case 'show_player_final_guess':
+            case 'show_player_final_wager':
+            case 'player_final_is_correct':
+            case 'player_final_is_incorrect':
+                if($player_type == 'host') {
+                    $key = array_key_first($board_array[$current_round]);
+                
+                    if($key !== false) {
+                        if($player_type == 'host') {
+                            $content .= $key;
+                        }
+                        if(isset($board_array[$current_round][$key])) {
+                            if($player_type == 'host') {
+                            // $content .= $category.': $'.$value;
+                            }
+                            $second_key = array_key_first($board_array[$current_round][$key]);
+                            if($second_key !== false) {
+                                if(isset($board_array[$current_round][$key][$second_key])) {
+                                    $answer = $board_array[$current_round][$key][$second_key]['answer'];
+                                    $content .= '<div class="question-text">'.$answer.'</div>';
+                                }
+                            } 
+                        }
+                        
+                        
+                    } 
+                    $players = get_post_meta($game_id, 'peril_game_players');
+                    $content .= show_final_player_score_actions($game_id, $players);
+                    $content .= '<button id="show_winner" class="peril-button">Show Winner</button>';
+                } else {
+                    $player_guessing = get_post_meta($game_id, 'peril_final_player_displaying', true);
+                    $username = get_post_meta($game_id, "peril_player_name_$player_guessing", true);
+                    $content .= '<div class="script-font">'.$username.'</div>';
+                    
+                    $guess = get_post_meta($game_id, "peril_player_{$player_guessing}_final_guess", true);
+                    $content .= '<div>'.$guess.'</div>';
+                    if($current_action == 'show_player_final_wager') {
+                        $wager = get_post_meta($game_id, "peril_player_{$player_guessing}_wager", true);
+                        $content .= '$'.number_format($wager, 0);
+                    }
+                    if($current_action == 'player_final_is_correct' || $current_action == 'player_final_is_incorrect') {
+                        $score = get_post_meta($game_id,"peril_player_{$player_guessing}_score", true);
+                        $content .= '$'.number_format($score, 0);
+                    }
+                }
+
+                break;
+            case 'show_winner':
+                $players = get_post_meta($game_id, 'peril_game_players');
+                $max_score = 0;
+                foreach($players as $player) {
+                    $score = get_post_meta($game_id,"peril_player_{$player}_score", true);
+                    if($score >= $max_score) {
+                        $max_score = $score;
+                    }
+                }
+                $winners = array();
+                foreach($players as $player) {
+                    $score = get_post_meta($game_id,"peril_player_{$player}_score", true);
+                    if($score == $max_score) {
+                        $winners[] = $player;
+                    }
+                }
+                $content .= '<div id="winners">';
+                foreach($winners as $winner) {
+                    $username = get_post_meta($game_id, "peril_player_name_$winner", true);
+                    $score = get_post_meta($game_id,"peril_player_{$winner}_score", true);
+                    $content .= '<div><div>Congratulations '.$username.'! You won!</div><div>$'.number_format($score, 0).'</div></div>';
+                }
+                $content .= '</div>';
                 break;
         }
         $content .= '</div>';
@@ -427,6 +497,34 @@ function get_screen_content($game_id, $current_action, $player_type) {
         }*/
     }
     return $content;
+}
+
+function show_final_player_score_actions($game_id, $players) {
+    $player_guessing = get_post_meta($game_id, 'peril_final_player_displaying', true);
+    $content = '<div class="player-results">';
+    foreach($players as $player) {
+        $class = '';
+        if($player_guessing == $player) {
+            $class = 'current-player';
+        }
+        $score = get_post_meta($game_id,"peril_player_{$player}_score", true);
+        $wager = get_post_meta($game_id, "peril_player_{$player}_wager", true);
+        $guess = get_post_meta($game_id, "peril_player_{$player}_final_guess", true);
+        $username = get_post_meta($game_id, "peril_player_name_$player", true);
+        $content .= '<div class="player-guess '.$class.'"><div>'.$username.'</div><div>Score: '.$score.'</div><div>Wager: '.$wager.'</div><div>'.$guess.'</div>';
+        //$content .= 'Complete the following in order';
+        $content .= '<button class="final-show-player-guess peril-button" data-player="'.$player.'">Show Player Guess</button>';
+        $content .= '<button class="final-show-player-wager peril-button" data-player="'.$player.'">Show Player Wager</button>';
+        $done = get_post_meta($game_id,"peril_player_{$player}_done", true);
+        if($done != 1) {
+            $content .= '<button class="final-player-is-correct peril-button" data-player="'.$player.'">Player is Correct</button>';
+            $content .= '<button class="final-player-is-incorrect peril-button" data-player="'.$player.'">Player is Incorrect</button>';
+        }
+        $content .= '</div>';
+    }
+    $content .= '</div>';
+    return $content;
+
 }
 
 function get_game_round($game_id) {

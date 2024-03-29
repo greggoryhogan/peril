@@ -339,6 +339,7 @@
         e.preventDefault();
         processing_request = true;
         var game_action = 'end_final_jeopardy_guesses';
+        
         $.ajax({
             url: peril.ajax_url,
             type: 'post',
@@ -450,6 +451,125 @@
         }
       });
 
+      //final peril answer
+      $(document).on('click', '.final-show-player-guess', function(e) {
+        e.preventDefault();
+        if(!processing_request) {
+            processing_request = true;
+            var player = $(this).attr('data-player');
+            $.ajax({
+                url: peril.ajax_url,
+                type: 'post',
+                data: {
+                    action : 'final_action',
+                    game_id : peril.game_id,
+                    player : player,
+                    final_action: 'show_player_final_guess'
+                },
+                success: function(response) {
+                    processing_request = false;
+                    game_version = response.game_version;
+                    $('#game-content').html(response.game_content);
+                }
+            });
+        }
+      });
+
+       //final peril wager
+       $(document).on('click', '.final-show-player-wager', function(e) {
+        e.preventDefault();
+        if(!processing_request) {
+            processing_request = true;
+            var player = $(this).attr('data-player');
+            $.ajax({
+                url: peril.ajax_url,
+                type: 'post',
+                data: {
+                    action : 'final_action',
+                    game_id : peril.game_id,
+                    player : player,
+                    final_action: 'show_player_final_wager'
+                },
+                success: function(response) {
+                    processing_request = false;
+                    game_version = response.game_version;
+                    $('#game-content').html(response.game_content);
+                }
+            });
+        }
+      });
+
+      //final peril wager
+      $(document).on('click', '.final-player-is-correct', function(e) {
+        e.preventDefault();
+        if(!processing_request) {
+            processing_request = true;
+            var player = $(this).attr('data-player');
+            $.ajax({
+                url: peril.ajax_url,
+                type: 'post',
+                data: {
+                    action : 'final_action',
+                    game_id : peril.game_id,
+                    player : player,
+                    final_action: 'player_final_is_correct'
+                },
+                success: function(response) {
+                    processing_request = false;
+                    game_version = response.game_version;
+                    $('#game-content').html(response.game_content);
+                }
+            });
+        }
+      });
+
+      //final peril wager
+      $(document).on('click', '.final-player-is-incorrect', function(e) {
+        e.preventDefault();
+        if(!processing_request) {
+            processing_request = true;
+            var player = $(this).attr('data-player');
+            $.ajax({
+                url: peril.ajax_url,
+                type: 'post',
+                data: {
+                    action : 'final_action',
+                    game_id : peril.game_id,
+                    player : player,
+                    final_action: 'player_final_is_incorrect'
+                },
+                success: function(response) {
+                    processing_request = false;
+                    game_version = response.game_version;
+                    $('#game-content').html(response.game_content);
+                }
+            });
+        }
+      });
+
+      //final peril wager
+      $(document).on('click', '#show_winner', function(e) {
+        e.preventDefault();
+        if(!processing_request) {
+            processing_request = true;
+            $.ajax({
+                url: peril.ajax_url,
+                type: 'post',
+                data: {
+                    action : 'final_action',
+                    game_id : peril.game_id,
+                    player : 0,
+                    final_action: 'show_winner'
+                },
+                success: function(response) {
+                    processing_request = false;
+                    game_version = response.game_version;
+                    $('#game-content').html(response.game_content);
+                }
+            });
+        }
+      });
+
       $(document).on('click','#update-name',function(e) {
         e.preventDefault();
         processing_request = true;
@@ -478,11 +598,5 @@
         });
       });
 
-      //onbeforeunload
-      /*$(window).on('beforeunload', function(){
-        if(player_type == 'host') {
-            return 'You are the host, are you sure you want to leave?';
-        }
-      });*/
-  
+     
 })( jQuery );
