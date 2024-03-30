@@ -59,7 +59,8 @@ function peril_scripts() {
 			'user_id' => get_peril_uuid(),
 			'game_id' => $post->ID,
 			'game_version' => get_game_version($post->ID),
-			'player_type' => get_player_type($post->ID)
+			'player_type' => get_player_type($post->ID),
+			'music_dir' => PERIL_PLUGIN_URL.'/assets/music/',
 		);
 		wp_localize_script( 'peril', 'peril', $game_data);
 	}
@@ -72,4 +73,10 @@ function peril_scripts() {
 		wp_localize_script( 'peril-game-creator', 'peril_game_creator', $game_data);
 	}
 	
+}
+
+add_action('wp_head','preload_peril_images');
+function preload_peril_images() {
+	echo '<link rel="preload" href="'.PERIL_PLUGIN_URL.'/assets/img/peril.png" as="image">';
+	echo '<link rel="preload" href="'.PERIL_PLUGIN_URL.'/assets/img/peril-bg.jpg" as="image">';
 }

@@ -3,7 +3,8 @@
     var game_version = peril.game_version;
     var player_type = peril.player_type;
     var requires_login = peril.requires_login;
-    
+    var audio_file = 'peril-intro.mp3';
+
     var uuid = peril.user_id;
     if(requires_login == 0 && uuid == 0) {
         //set default uuid
@@ -13,6 +14,24 @@
             Cookies.set('peril_uuid', uuid, { expires: 7 })
         }
     }
+
+    const peril_music = document.getElementById("peril-music");
+    let bt = document.getElementById("play-peril-music");
+    bt.addEventListener("click", ()=>{
+        peril_music.play();
+    });
+    const startPlaying = ()=>{
+        peril_music.removeEventListener('playing', startPlaying);
+        bt.classList.add("hide");
+        if(peril_music.src != '') {
+            //peril_music.src = peril.music_dir + audio_file;
+            peril_music.play();
+        }
+    }
+    peril_music.addEventListener('playing', startPlaying);
+    peril_music.addEventListener('error', ()=>{
+        console.log("error");
+    });
 
     window.setInterval(function(){
         updateGame();
@@ -34,6 +53,12 @@
                 if(response.needs_update == 1 && !processing_request) {
                     game_version = response.game_version;
                     $('#game-content').html(response.game_content);
+                    if(player_type == response.player_audio_for_type || uuid == response.player_audio_for_player) {
+                        audio_file = response.audio_file;
+                        peril_music.src = peril.music_dir + response.audio_file;
+                        //alert(response.audio_file);
+                        $('#play-peril-music').trigger('click');
+                    }
                 }
             }
         });
@@ -172,6 +197,7 @@
             return false;
         }
         processing_request = true;
+        peril_music.play();
         $(this).attr('disabled', true);
         $(this).text('Starting the game...')
         $.ajax({

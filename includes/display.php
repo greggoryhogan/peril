@@ -58,6 +58,7 @@ function get_game_content($post_id) {
     }
     $content = '';
     if($started == '') {
+        
         //echo '<div class="notice shadow">Buzzers ready, we&rsquo;re waiting for the game to start!</div>';
         $content .= '<div class="question-text awaiting-start">The game has not started</div>';
         
@@ -132,6 +133,7 @@ function show_started_game($post_id) {
         $players = array();
     }
     $peril_uuid = get_peril_uuid();
+    $current_round = get_game_round($post_id);
     if($peril_uuid > 0) {
         $host = get_post_meta($post_id, 'peril_game_host', true);
         
@@ -150,7 +152,7 @@ function show_started_game($post_id) {
                     'show_player_final_wager',
                     'player_final_is_correct',
                     'player_final_is_incorrect',
-                    'show_winner'
+                    'show_winner',
                 );
                 if(in_array($current_action, $ignore_actions)) {
                     $show_buttons = false;
@@ -167,9 +169,10 @@ function show_started_game($post_id) {
                 $content .= '<div class="action-list">';
                     $actions = array(
                         'show_scores' => 'Show Scores',
+                        'display_game_board' => 'Show Board',
                     );
                     if($current_action != '') {
-                        if(!in_array($current_action, $ignore_actions)) {
+                        if(!in_array($current_action, $ignore_actions) && $current_action != 'game_intro') {
                             $content .= '<div class="host-action" data-action="resume_game">Resume Game</div>';    
                         }
                     }
@@ -180,7 +183,7 @@ function show_started_game($post_id) {
                         }
                         $content .= '" data-action="'.$k.'">'.$v.'</div>';
                     }
-                    $current_round = get_game_round($post_id);
+                    
                     $actions = array(
                         'goto_round_1' => 'Go to round 1',
                         'goto_round_2' => 'Go to round 2',
@@ -202,6 +205,22 @@ function show_started_game($post_id) {
                             $content .= ' inactive';
                         }
                         $content .= '" data-action="'.$k.'">Start Final Peril</div>';
+                    } else {
+                        if($current_round <= 2) {
+                            $actions = array();
+                            $actions['show_category_1'] = 'Show Category 1';
+                            $actions['show_category_2'] = 'Show Category 2';
+                            $actions['show_category_3'] = 'Show Category 3';
+                            $actions['show_category_4'] = 'Show Category 4';
+                            $actions['show_category_5'] = 'Show Category 5';
+                            foreach($actions as $k => $v) {
+                                $content .= '<div class="host-action';
+                                if($k == $current_action) {
+                                    $content .= ' inactive';
+                                }
+                                $content .= '" data-action="'.$k.'">'.$v.'</div>';
+                            }
+                        }
                     }
                 $content .= '</div>';
                 $content .= '<div class="score-adjustments">';
@@ -216,7 +235,7 @@ function show_started_game($post_id) {
                         $content .= '<button class="update-score peril-button" data-player="'.$player.'">Update Score</button>';
                         $content .= '</div>';
                     }
-                $content .= '<div class="score-adjustments">';
+                $content .= '</div>';
                 //$content .= '<div>'. get_player_scores($players, $post_id, 'host').'</div>';
             $content .= '</div>';
             //show scores
@@ -282,6 +301,9 @@ function get_screen_content($game_id, $current_action, $player_type) {
             case 'starting_game':
                 $content .= '<div class="question-text">The game is about to start!</div>';
                 break;
+            case 'game_intro':
+                $content .= '<div class="peril-intro"></div>';
+
             case 'show_scores':
                 $players = get_post_meta($game_id, 'peril_game_players');
                 if(!is_array($players)) {
@@ -294,7 +316,7 @@ function get_screen_content($game_id, $current_action, $player_type) {
                 if($game_round == '') {
                     $game_round = 1;
                 }*/
-                $content .= display_game_board($game_id, $current_round);
+                $content .= display_game_board($game_id, $current_round, 'intro_board');
                 break;
             case 'show_clue':
                 if(in_array($concat, $dbl_jeopardy)) {
@@ -617,7 +639,7 @@ function peril_create_game_callback() {
     return $form;
 }
 
-function display_game_board($game_id, $game_round = 1) {
+function display_game_board($game_id, $game_round = 1, $extra_class = '') {
     $board_array = maybe_unserialize(get_post_meta($game_id, 'peril_game_board', true));
     $used_answers_array = maybe_unserialize(get_post_meta($game_id, 'peril_game_used_answers', true));
     if(!is_array($used_answers_array)) {
@@ -688,7 +710,7 @@ function display_game_board($game_id, $game_round = 1) {
         }
     } 
     if(isset($board_array[$game_round])) {
-        $content .= '<div class="game-board round-'.$game_round.'">';
+        $content .= '<div class="game-board round-'.$game_round.' '.$extra_class.'">';
             if($game_round == 3) {
                 //$content .= '<span class="answer"><span class="prompt">'.$v['answer'].'</span>'.$v['question'].'</span>';
                 //$content .= '<span class="answer"><span class="prompt">'.$board_array[$game_round]['answer'].'</span></span>';
@@ -752,7 +774,7 @@ function display_game_board($game_id, $game_round = 1) {
                     $content .= '<div class="category">'.$category.'</div>';   
                 }
                 foreach($board_array[$game_round] as $category => $array) {
-                    $content .= '<div class="round-column" data-category="'.$category.'">';
+                    $content .= '<div class="round-column specifier" data-category="'.$category.'">';
                     foreach($array as $k => $v) {
                         $question_status = 'available';
                         if(isset($used_answers_array[$category])) {

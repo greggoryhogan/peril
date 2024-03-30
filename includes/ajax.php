@@ -6,15 +6,29 @@ function check_peril_game_version() {
     $needs_update = 0;
     if($current_version != $game_version) {
         $needs_update = 1;
+        $player_audio_for_type = get_post_meta($game_id,'peril_player_audio_for_type', true);
+        $player_audio_for_player = get_post_meta($game_id, 'peril_player_audio_for_player', true);
+        $audio_file = get_post_meta($game_id, 'peril_current_audio', true);
+        wp_send_json(
+            array(
+                'needs_update' => $needs_update,
+                'game_version' => $current_version,
+                'game_content' => get_game_content($game_id),
+                'player_audio_for_type' => $player_audio_for_type,
+                'player_audio_for_player' => $player_audio_for_player,
+                'audio_file' => $audio_file
+            )
+        );
+    } else {
+        wp_send_json(
+            array(
+                'needs_update' => $needs_update,
+                'game_version' => $current_version,
+                'game_content' => get_game_content($game_id)
+            )
+        );
     }
     //update_game_version($post_id)
-    wp_send_json(
-        array(
-            'needs_update' => $needs_update,
-            'game_version' => $current_version,
-            'game_content' => get_game_content($game_id)
-        )
-    );
 
 }
 add_action("wp_ajax_check_peril_game_version", "check_peril_game_version");
@@ -96,9 +110,16 @@ function start_game() {
     update_post_meta($game_id, 'peril_game_started', 1);
     update_post_meta($game_id, 'peril_game_round', 1);
     $game_version = update_game_version($game_id);
-    update_post_meta($game_id,'peril_game_action', 'starting_game');
-    sleep(5);
-    delete_post_meta($game_id,'peril_game_action');
+    //update_post_meta($game_id,'peril_game_action', 'starting_game');
+    //sleep(5);
+    //delete_post_meta($game_id,'peril_game_action');
+    update_post_meta($game_id,'peril_player_audio_for_type', 'audience_member');
+    update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+    update_post_meta($game_id, 'peril_current_audio', 'peril-intro.mp3');
+    update_post_meta($game_id,'peril_game_action', 'game_intro');
+    sleep(15);
+    update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+    //delete_post_meta($game_id,'peril_game_action');
     $game_version = update_game_version($game_id);
     wp_send_json(array(
         'game_content' => get_game_content($game_id),
@@ -138,6 +159,13 @@ function host_action() {
             $value = absint( $_POST['value'] );
             update_post_meta($game_id, 'peril_current_category', $category);
             update_post_meta($game_id, 'peril_current_value', $value);
+        } else if($game_action == 'show_scores') {
+            update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+            update_post_meta($game_id, 'peril_player_audio_for_player', 'none');  
+        } else if($game_action == 'display_game_board') {
+            update_post_meta($game_id,'peril_player_audio_for_type', 'audience_member');
+            update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+            update_post_meta($game_id, 'peril_current_audio', 'jeopardy-board.mp3');
         } else if($game_action == 'goto_round_1') {
             update_post_meta($game_id, 'peril_game_round', '1');
             delete_post_meta($game_id,'peril_game_action');
