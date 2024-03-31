@@ -144,7 +144,15 @@ function host_action() {
     $game_action = sanitize_text_field($_POST['game_action']);
     if($game_action == 'resume_game') {
         $previous_action = get_post_meta($game_id, 'peril_previous_action', true);
-        if($previous_action != '') {
+        $ignore_actions = array(
+            'show_scores',
+            'show_category_1',
+            'show_category_2',
+            'show_category_3',
+            'show_category_4',
+            'show_category_5'
+        );
+        if($previous_action != '' && $previous_action != 'show_scores') {
             update_post_meta($game_id,'peril_game_action', $previous_action);
             delete_post_meta($game_id,'peril_previous_action');
         } else {
@@ -166,6 +174,40 @@ function host_action() {
             update_post_meta($game_id,'peril_player_audio_for_type', 'audience_member');
             update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
             update_post_meta($game_id, 'peril_current_audio', 'jeopardy-board.mp3');
+        } else if($game_action == 'no-response') {
+            $peril_current_value = get_post_meta($game_id, 'peril_current_value', true);
+            $peril_current_category = get_post_meta($game_id, 'peril_current_category', true);
+            delete_post_meta( $game_id, 'peril_current_value');
+            delete_post_meta( $game_id, 'peril_current_category');
+            delete_post_meta( $game_id, 'peril_game_action');
+            delete_post_meta($game_id, 'peril_players_buzzed');
+            $used_answers = get_post_meta($game_id, 'peril_game_used_answers', true);
+            if($used_answers == '') {
+                $used_answers = array();
+            }
+            $used_answers = maybe_unserialize($used_answers);
+            $used_answers[$peril_current_category][] = $peril_current_value;
+            update_post_meta($game_id,  'peril_game_used_answers', $used_answers);
+            update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+            update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+        } else if($game_action == 'daily_double') {
+            //update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+            //update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+        } else if($game_action == 'show_category_1') {
+            update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+            update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+        } else if($game_action == 'show_category_2') {
+            update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+            update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+        } else if($game_action == 'show_category_3') {
+            update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+            update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+        } else if($game_action == 'show_category_4') {
+            update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+            update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+        } else if($game_action == 'show_category_5') {
+            update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+            update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
         } else if($game_action == 'goto_round_1') {
             update_post_meta($game_id, 'peril_game_round', '1');
             delete_post_meta($game_id,'peril_game_action');

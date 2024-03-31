@@ -312,15 +312,44 @@ function get_screen_content($game_id, $current_action, $player_type) {
                 $content .= get_player_scores($players, $game_id, 'score-recap');
                 break;
             case 'display_game_board':
-                /*$game_round = get_post_meta($game_id, 'peril_game_round', true);
-                if($game_round == '') {
-                    $game_round = 1;
-                }*/
-                $content .= display_game_board($game_id, $current_round, 'intro_board');
+                $seen = get_post_meta($game_id, "peril_player_{$uuid}_seen_round_{$current_round}_board", true);
+                if($seen == '') {
+                    $class = 'intro_board';
+                    update_post_meta($game_id, "peril_player_{$uuid}_seen_round_{$current_round}_board", 'yep');
+                } else {
+                    $class = 'has-seen';
+                }
+                update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+                $content .= display_game_board($game_id, $current_round, $class);
+                break;
+            case 'show_category_1':
+            case 'show_category_2':
+            case 'show_category_3':
+            case 'show_category_4':
+            case 'show_category_5':
+                $board_array = maybe_unserialize(get_post_meta($game_id, 'peril_game_board', true));
+                $keys = array_keys($board_array[$current_round]);
+                //$content .= print_r($keys, true);
+                if($current_action == 'show_category_1') {
+                    $content .= '<div class="question-text slide-left">'.$keys[0].'</div>';
+                } else if($current_action == 'show_category_2') {
+                    $content .= '<div class="question-text slide-left">'.$keys[1].'</div>';
+                }  else if($current_action == 'show_category_3') {
+                    $content .= '<div class="question-text  slide-left">'.$keys[2].'</div>';
+                } else if($current_action == 'show_category_4') {
+                    $content .= '<div class="question-text slide-left">'.$keys[3].'</div>';
+                } else if($current_action == 'show_category_5') {
+                    $content .= '<div class="question-text slide-left">'.$keys[4].'</div>';
+                }
                 break;
             case 'show_clue':
+                $show_timer = true;
                 if(in_array($concat, $dbl_jeopardy)) {
-                    $content .= '<div class="question-text">Daily Double!</div>';
+                    $peril_dd_wager = get_post_meta($game_id, 'peril_dd_wager', true);
+                    if($peril_dd_wager == '') {
+                        $show_timer = false;
+                    }
+                    $content .= '<div class="question-text daily-double">Daily Double!</div>';
                     if($player_type == 'host') {
                         $player_name = get_post_meta($game_id, "peril_player_name_$previously_answering", true);
                         $content .= '<div>Contestant guessing: '.$player_name.'</div>';
@@ -355,9 +384,16 @@ function get_screen_content($game_id, $current_action, $player_type) {
                                     $content .= '<button class="peril-button correct" data-value="correct">Correct</button>';
                                     $content .= '<button class="peril-button incorrect" data-value="incorrect">Incorrect</button>';
                                 $content .= '</div>';
+                            } else {
+                                $content .= '<button class="peril-button no-answer host-action" data-action="no-response">No Response</button>';
                             }
                         }
                     }
+                }
+                if(is_audience_member($game_id)) {
+                    if($show_timer) {
+                        $content .= '<div class="question-timer"><div></div><div></div><div></div><div></div><div></div><div></div></div>';
+                    } 
                 }
                 
                // $content .= display_game_board($game_id, $current_round);
@@ -379,6 +415,9 @@ function get_screen_content($game_id, $current_action, $player_type) {
                             $content .= '</div>';
                         }
                     }
+                }
+                if(is_audience_member($game_id)) {
+                    $content .= '<div class="question-timer"><div></div><div></div><div></div><div></div><div></div><div></div></div>';
                 }
                 break;
             case 'show_final_jeopardy':

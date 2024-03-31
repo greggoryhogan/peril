@@ -39,6 +39,33 @@
 
     var processing_request = false;
 
+    var counter = 14000;
+
+    function timerManagement() {
+        var timer;
+        return {
+            start() {
+                var counter = 120;
+                timer = setInterval(function () {
+                    if (counter == 0) {
+                        clearInterval(timer);
+                        audio_file = 'times-up.mp3';
+                        peril_music.src = peril.music_dir + audio_file;
+                        //alert(response.audio_file);
+                        $('#play-peril-music').trigger('click');
+                        
+                    }
+                    counter--;
+                }, 100);
+            },
+            stop() {
+                clearInterval(timer)
+            }
+        }
+    }
+
+    var timer = timerManagement();
+
     function updateGame() {
         $.ajax({
             type: 'post',
@@ -53,8 +80,12 @@
                 if(response.needs_update == 1 && !processing_request) {
                     game_version = response.game_version;
                     $('#game-content').html(response.game_content);
+                    if($('.question-timer').length && player_type == 'audience_member') {
+                        timer.start();
+                    } else {
+                        timer.stop();
+                    }
                     if(player_type == response.player_audio_for_type || uuid == response.player_audio_for_player) {
-                        audio_file = response.audio_file;
                         peril_music.src = peril.music_dir + response.audio_file;
                         //alert(response.audio_file);
                         $('#play-peril-music').trigger('click');
