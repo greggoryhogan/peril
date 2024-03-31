@@ -24,6 +24,7 @@ function update_game_version($post_id) {
 }
 
 function get_player_scores($players, $game_id, $class = '') {
+    $uuid = get_peril_uuid();
     $scores = '<div class="player-scores '.$class.'">';
     foreach($players as $player) {
         $score = get_post_meta($game_id,"peril_player_{$player}_score", true);
@@ -31,7 +32,11 @@ function get_player_scores($players, $game_id, $class = '') {
             $score = 0;
         }
         $username = get_post_meta($game_id, "peril_player_name_$player", true);
-        $scores .= '<div class="score"><div class="name">'.$username.'</div><div class="currency">';
+        $myself = '';
+        if($player == $uuid) {
+            $myself = 'current_player';
+        }
+        $scores .= '<div class="score '.$myself.'"><div class="name">'.$username.'</div><div class="currency">';
         if($score >= 0) {
             $scores .= '$'.number_format($score, 0);
         } else {

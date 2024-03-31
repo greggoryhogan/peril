@@ -81,7 +81,11 @@
                     game_version = response.game_version;
                     $('#game-content').html(response.game_content);
                     if($('.question-timer').length && player_type == 'audience_member') {
-                        timer.start();
+                        var delay = parseInt($('.question-timer').attr('data-delay'));
+                        setTimeout(function() {
+                            $('.question-timer').removeClass('is-hidden');
+                            timer.start();
+                        }, delay);
                     } else {
                         timer.stop();
                     }

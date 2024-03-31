@@ -58,13 +58,20 @@ function get_game_content($post_id) {
     }
     $content = '';
     if($started == '') {
+        include_once dirname( PERIL_PLUGIN_FILE ) . '/assets/lib/phpqrcode/qrlib.php';
+        $text = get_permalink($post_id);
+        QRcode::png($text, PERIL_PLUGIN_PATH .'assets/img/qrcode.jpg', 'M', '7');
         
         //echo '<div class="notice shadow">Buzzers ready, we&rsquo;re waiting for the game to start!</div>';
         $content .= '<div class="question-text awaiting-start">The game has not started</div>';
         
         if($peril_uuid > 0) {
             if(is_audience_member($post_id)) {
-                //do nothing, we're waiting
+                $content .= '<div class="welcome-actions">';
+                    $content .= '<div>';
+                        $content .= '<img src="'.PERIL_PLUGIN_URL .'assets/img/qrcode.jpg" />';
+                    $content .= '</div>';
+                $content .= '</div>';
             } else if(in_array($peril_uuid, $players)) {
                 $name = get_post_meta($post_id, "peril_player_name_$peril_uuid", true);
                 $content .= '<p class="peril-white">Enter your name below<span class="player-name-field"><input type="text" id="enter-player-name" placeholder="'.$name.'" /><button class="peril-button" id="update-name">Update</button></span></p>';
@@ -72,16 +79,31 @@ function get_game_content($post_id) {
                 $content .= '<span>When you have the question for an answer, tap your device to buzz in. You will have 5 seconds to respond.<br>Don&rsquo;t forget your phrasing!</span></p>';
             } else {
                 if($host == '') {
-                    $content .= '<button class="peril-button" id="claim-host">Join as host</button>';
-                    $content .= '<button class="peril-button" id="claim-player">Join as a Competitor</button>';
-                    $content .= '<button id="audience-member" class="peril-button">Join as an audience member</button>';
+                    $content .= '<div class="welcome-actions">';
+                        $content .= '<div>';
+                            $content .= '<button class="peril-button" id="claim-host">Join as host</button>';
+                            $content .= '<button class="peril-button" id="claim-player">Join as a Competitor</button>';
+                            $content .= '<button id="audience-member" class="peril-button">Join as an audience member</button>';
+                        $content .= '</div>';
+                        $content .= '<div>';
+                            $content .= '<img src="'.PERIL_PLUGIN_URL .'assets/img/qrcode.jpg" />';
+                        $content .= '</div>';
+                    $content .= '</div>';
+
                 } else {
                     if($host == $peril_uuid) {
                         $content .= '<div class="notice shadow">When all players are ready, start the game!</div>';
                         $content .= '<button class="peril-button" id="start_game">Start the game</button>';
                     } else {
-                        $content .= '<button class="peril-button" id="claim-player">Join as a Competitor</button>';
-                        $content .= '<button id="audience-member" class="peril-button">Join as an audience member</button>';
+                        $content .= '<div class="welcome-actions">';
+                            $content .= '<div>';
+                                $content .= '<button class="peril-button" id="claim-player">Join as a Competitor</button>';
+                                $content .= '<button id="audience-member" class="peril-button">Join as an audience member</button>';
+                            $content .= '</div>';
+                            $content .= '<div>';
+                                $content .= '<img src="'.PERIL_PLUGIN_URL .'assets/img/qrcode.jpg" />';
+                            $content .= '</div>';
+                        $content .= '</div>';
                     }
                 }
             }
@@ -224,17 +246,26 @@ function show_started_game($post_id) {
                     }
                 $content .= '</div>';
                 $content .= '<div class="score-adjustments">';
+                    $currently_answering = get_post_meta($post_id, 'peril_player_answering', true);
+                    if($currently_answering == '') {
+                        $currently_answering = get_post_meta($post_id, 'peril_last_player', true);
+                    }
+                    $current_text = 'Currently player: ';
                     foreach($players as $player) {
                         $score = get_post_meta($post_id,"peril_player_{$player}_score", true);
                         if($score == '') {
                             $score = 0;
                         }
                         $username = get_post_meta($post_id, "peril_player_name_$player", true);
+                        if($currently_answering == $player) {
+                            $current_text .= $username;
+                        }
                         $content .= '<div class="score"><div class="name">'.$username.'</div>';
                         $content .= '<input type="text" class="new-score" value="'.$score.'" />';
                         $content .= '<button class="update-score peril-button" data-player="'.$player.'">Update Score</button>';
                         $content .= '</div>';
                     }
+                    $content .= $current_text;
                 $content .= '</div>';
                 //$content .= '<div>'. get_player_scores($players, $post_id, 'host').'</div>';
             $content .= '</div>';
@@ -316,10 +347,12 @@ function get_screen_content($game_id, $current_action, $player_type) {
                 if($seen == '') {
                     $class = 'intro_board';
                     update_post_meta($game_id, "peril_player_{$uuid}_seen_round_{$current_round}_board", 'yep');
+                    update_post_meta($game_id,'peril_player_audio_for_type', 'audience_member');
                 } else {
                     $class = 'has-seen';
+                    update_post_meta($game_id,'peril_player_audio_for_type', 'none');
                 }
-                update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+                
                 $content .= display_game_board($game_id, $current_round, $class);
                 break;
             case 'show_category_1':
@@ -345,11 +378,16 @@ function get_screen_content($game_id, $current_action, $player_type) {
             case 'show_clue':
                 $show_timer = true;
                 if(in_array($concat, $dbl_jeopardy)) {
+                    $time_delay = 5000;
                     $peril_dd_wager = get_post_meta($game_id, 'peril_dd_wager', true);
                     if($peril_dd_wager == '') {
                         $show_timer = false;
                     }
-                    $content .= '<div class="question-text daily-double">Daily Double!</div>';
+                    $spin = '';
+                    if(is_audience_member($game_id)) {
+                        $spin = 'spin';
+                    }
+                    $content .= '<div class="question-text daily-double '.$spin.'">Daily Double!</div>';
                     if($player_type == 'host') {
                         $player_name = get_post_meta($game_id, "peril_player_name_$previously_answering", true);
                         $content .= '<div>Contestant guessing: '.$player_name.'</div>';
@@ -370,6 +408,7 @@ function get_screen_content($game_id, $current_action, $player_type) {
                         $content .= '<div class="peril-form-field row wager"><input type="text" placeholder="Wager" id="input-wager" data-max="'.$player_score.'" /><button class="peril-button" id="submit-wager">Set Wager</button>';
                     }
                 } else {
+                    $time_delay = 0;
                     if(isset($board_array[$current_round][$category][$value])) {
                         if($player_type == 'host') {
                             $content .= $category.': $'.$value;
@@ -392,7 +431,7 @@ function get_screen_content($game_id, $current_action, $player_type) {
                 }
                 if(is_audience_member($game_id)) {
                     if($show_timer) {
-                        $content .= '<div class="question-timer"><div></div><div></div><div></div><div></div><div></div><div></div></div>';
+                        $content .= '<div class="question-timer is-hidden" data-delay="'.$time_delay.'"><div></div><div></div><div></div><div></div><div></div><div></div></div>';
                     } 
                 }
                 
@@ -417,7 +456,7 @@ function get_screen_content($game_id, $current_action, $player_type) {
                     }
                 }
                 if(is_audience_member($game_id)) {
-                    $content .= '<div class="question-timer"><div></div><div></div><div></div><div></div><div></div><div></div></div>';
+                    $content .= '<div class="question-timer is-hidden" data-delay="5000"><div></div><div></div><div></div><div></div><div></div><div></div></div>';
                 }
                 break;
             case 'show_final_jeopardy':
@@ -544,7 +583,16 @@ function get_screen_content($game_id, $current_action, $player_type) {
         return $content;
     } else {
         //show board for now
-        $content = display_game_board($game_id, $current_round);
+        $seen = get_post_meta($game_id, "peril_player_{$uuid}_seen_round_{$current_round}_board", true);
+        if($seen == '') {
+            $class = 'intro_board';
+            update_post_meta($game_id, "peril_player_{$uuid}_seen_round_{$current_round}_board", '1');
+            update_post_meta($game_id,'peril_player_audio_for_type', 'audience_member');
+        } else {
+            $class = 'has-seen';
+            update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+        }
+        $content = display_game_board($game_id, $current_round, $class);
         /*switch($player_type) {
             case 'host':
                 $content = '<p class="peril-white">You are the host</p>';

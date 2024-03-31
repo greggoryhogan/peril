@@ -109,6 +109,8 @@ function start_game() {
     $game_id = absint($_POST['game_id']);
     update_post_meta($game_id, 'peril_game_started', 1);
     update_post_meta($game_id, 'peril_game_round', 1);
+    $players = get_post_meta($game_id, 'peril_game_players');
+    update_post_meta($game_id, 'peril_last_player', $players[0]);
     $game_version = update_game_version($game_id);
     //update_post_meta($game_id,'peril_game_action', 'starting_game');
     //sleep(5);
@@ -167,6 +169,15 @@ function host_action() {
             $value = absint( $_POST['value'] );
             update_post_meta($game_id, 'peril_current_category', $category);
             update_post_meta($game_id, 'peril_current_value', $value);
+            $concat = "$category:$value";
+            //get double jeopardy question(s)
+            $current_round = get_game_round($game_id);
+            $dbl_jeopardy = get_post_meta($game_id, "round_{$current_round}_double_jeopardy");
+            if(in_array($concat, $dbl_jeopardy)) {
+                update_post_meta($game_id,'peril_player_audio_for_type', 'audience_member');
+                update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+                update_post_meta($game_id, 'peril_current_audio', 'daily-double.mp3');
+            }
         } else if($game_action == 'show_scores') {
             update_post_meta($game_id,'peril_player_audio_for_type', 'none');
             update_post_meta($game_id, 'peril_player_audio_for_player', 'none');  
@@ -191,8 +202,9 @@ function host_action() {
             update_post_meta($game_id,'peril_player_audio_for_type', 'none');
             update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
         } else if($game_action == 'daily_double') {
-            //update_post_meta($game_id,'peril_player_audio_for_type', 'none');
-            //update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+            update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+            update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+            update_post_meta($game_id, 'peril_current_audio', '');
         } else if($game_action == 'show_category_1') {
             update_post_meta($game_id,'peril_player_audio_for_type', 'none');
             update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
@@ -211,9 +223,32 @@ function host_action() {
         } else if($game_action == 'goto_round_1') {
             update_post_meta($game_id, 'peril_game_round', '1');
             delete_post_meta($game_id,'peril_game_action');
+            update_post_meta($game_id,'peril_player_audio_for_type', 'audience_member');
+            update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+            update_post_meta($game_id, 'peril_current_audio', 'jeopardy-board.mp3');
         } else if($game_action == 'goto_round_2') {
+            //set lowest score to start round
+            $players = get_post_meta($game_id, 'peril_game_players');
+            $min_score = 9999999;
+            foreach($players as $player) {
+                $score = get_post_meta($game_id,"peril_player_{$player}_score", true);
+                if($score <= $min_score) {
+                    $min_score = $score;
+                }
+            }
+            $winners = array();
+            foreach($players as $player) {
+                $score = get_post_meta($game_id,"peril_player_{$player}_score", true);
+                if($score <= $min_score) {
+                    $winners[] = $player;
+                }
+            }
+            update_post_meta($game_id, 'peril_last_player', $winners[0]);
             update_post_meta($game_id, 'peril_game_round', '2');
             delete_post_meta($game_id,'peril_game_action');
+            update_post_meta($game_id,'peril_player_audio_for_type', 'audience_member');
+            update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+            update_post_meta($game_id, 'peril_current_audio', 'jeopardy-board.mp3');
         } else if($game_action == 'goto_round_3') {
             delete_post_meta($game_id,'peril_game_action');
             update_post_meta($game_id, 'peril_game_round', '3');
@@ -309,6 +344,9 @@ function player_buzz() {
         if(in_array($user_id, $already_buzzed)) {
             //nothing, they got a question wrong
         } else if($currently_answering == '') {
+            update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+            update_post_meta($game_id, 'peril_player_audio_for_player', $user_id);
+            update_post_meta($game_id, 'peril_current_audio', 'ding.mp3');
             update_post_meta( $game_id, 'peril_player_answering', $user_id);
             $already_buzzed[] = $user_id;
             update_post_meta($game_id, 'peril_players_buzzed', $already_buzzed);
@@ -365,6 +403,7 @@ function player_response() {
         $used_answers[$peril_current_category][] = $peril_current_value;
         update_post_meta($game_id,  'peril_game_used_answers', $used_answers);
 
+       
         
         delete_post_meta( $game_id, 'peril_player_answering');
 
@@ -389,6 +428,7 @@ function player_response() {
             delete_post_meta( $game_id, 'peril_current_category');
             delete_post_meta( $game_id, 'peril_game_action');
             delete_post_meta($game_id, 'peril_players_buzzed');
+            update_post_meta($game_id, 'peril_last_player', $currently_answering);
         } else {
             //subtract points
             $score = intval($score) - absint($peril_current_value);
@@ -396,9 +436,12 @@ function player_response() {
         //update their score
         update_post_meta($game_id,"peril_player_{$currently_answering}_score", $score);
         //remove player answering and log last player for dbl jeopardy
-        update_post_meta($game_id, 'peril_last_player', $currently_answering);
         delete_post_meta( $game_id, 'peril_player_answering');
     }
+
+    update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+    update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+    update_post_meta($game_id, 'peril_current_audio', '');
     
     $game_version = update_game_version($game_id);
     wp_send_json(
@@ -417,6 +460,8 @@ function set_daily_double() {
     $wager = absint($_POST['wager']);
     update_post_meta($game_id,'peril_game_action', 'daily_double');
     update_post_meta($game_id, 'peril_dd_wager', $wager);
+    update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+    update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
     $game_version = update_game_version($game_id);
     wp_send_json(
         array(
