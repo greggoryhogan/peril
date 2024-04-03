@@ -221,6 +221,12 @@ function show_started_game($post_id) {
                         $content .= '" data-action="'.$k.'">'.$v.'</div>';
                     }
                     if($current_round == 3) {
+                        $k = 'show_final_jeopardy_clue';
+                        $content .= '<div class="host-action';
+                        if($k == $current_action) {
+                            $content .= ' inactive';
+                        }
+                        $content .= '" data-action="'.$k.'">Show Final Peril Clue</div>';
                         $k = 'show_final_jeopardy';
                         $content .= '<div class="host-action';
                         if($k == $current_action) {
@@ -312,13 +318,16 @@ function get_screen_content($game_id, $current_action, $player_type) {
                 $answering .= ' current-player-answering';
             }
         }
+        $zoom = false;
         if($current_action == 'show_clue' || $current_action == 'daily_double') {
+            $zoom = true;
             $category = get_post_meta($game_id, 'peril_current_category', true);
             $value = get_post_meta($game_id, 'peril_current_value', true);
             $concat = "$category:$value";
             //get double jeopardy question(s)
             $dbl_jeopardy = get_post_meta($game_id, "round_{$current_round}_double_jeopardy");
             if(in_array($concat, $dbl_jeopardy)) {
+                $zoom = false;
                 $answering = 'player-answering';
                 $previously_answering = get_post_meta($game_id, 'peril_last_player', true);
                 if($uuid == $previously_answering) {
@@ -326,8 +335,13 @@ function get_screen_content($game_id, $current_action, $player_type) {
                 }
             }
         }
+        $zoom_class = '';
+        if($zoom && $player_type == 'audience_member') {
+            $zoom_class = 'zoom-in';
+            $content .= display_game_board($game_id, $current_round, 'behind-clue');
+        }
         
-        $content .= '<div class="game-action '.$player_type.' '.$current_action.' '.$answering.'">';
+        $content .= '<div class="game-action '.$player_type.' '.$current_action.' '.$zoom_class.' '.$answering.'">';
         switch($current_action) {
             case 'starting_game':
                 $content .= '<div class="question-text">The game is about to start!</div>';
@@ -459,6 +473,7 @@ function get_screen_content($game_id, $current_action, $player_type) {
                     $content .= '<div class="question-timer is-hidden" data-delay="5000"><div></div><div></div><div></div><div></div><div></div><div></div></div>';
                 }
                 break;
+            case 'show_final_jeopardy_clue':
             case 'show_final_jeopardy':
             case 'end_final_jeopardy_guesses':
                 $key = array_key_first($board_array[$current_round]);
@@ -468,8 +483,8 @@ function get_screen_content($game_id, $current_action, $player_type) {
                         $content .= $key;
                     }
                     if(isset($board_array[$current_round][$key])) {
-                        if($player_type == 'host') {
-                           // $content .= $category.': $'.$value;
+                        if($player_type != 'host') {
+                           $content .= '<div style="margin-bottom: 15px;">'.$key.'</div>';
                         }
                         $second_key = array_key_first($board_array[$current_round][$key]);
                         if($second_key !== false) {
@@ -583,14 +598,16 @@ function get_screen_content($game_id, $current_action, $player_type) {
         return $content;
     } else {
         //show board for now
-        $seen = get_post_meta($game_id, "peril_player_{$uuid}_seen_round_{$current_round}_board", true);
-        if($seen == '') {
-            $class = 'intro_board';
-            update_post_meta($game_id, "peril_player_{$uuid}_seen_round_{$current_round}_board", '1');
-            update_post_meta($game_id,'peril_player_audio_for_type', 'audience_member');
-        } else {
-            $class = 'has-seen';
-            update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+        if($current_round != 3) {
+            $seen = get_post_meta($game_id, "peril_player_{$uuid}_seen_round_{$current_round}_board", true);
+            if($seen == '') {
+                $class = 'intro_board';
+                update_post_meta($game_id, "peril_player_{$uuid}_seen_round_{$current_round}_board", '1');
+                update_post_meta($game_id,'peril_player_audio_for_type', 'audience_member');
+            } else {
+                $class = 'has-seen';
+                update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+            }
         }
         $content = display_game_board($game_id, $current_round, $class);
         /*switch($player_type) {

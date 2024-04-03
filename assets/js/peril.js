@@ -78,6 +78,7 @@
             },
             success: function(response) {
                 if(response.needs_update == 1 && !processing_request) {
+                    timer.stop();
                     game_version = response.game_version;
                     $('#game-content').html(response.game_content);
                     if($('.question-timer').length && player_type == 'audience_member') {

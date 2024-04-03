@@ -253,6 +253,19 @@ function host_action() {
             delete_post_meta($game_id,'peril_game_action');
             update_post_meta($game_id, 'peril_game_round', '3');
             delete_post_meta($game_id,'peril_game_action');
+            //make ding
+            update_post_meta($game_id,'peril_player_audio_for_type', 'audience_member');
+            update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+            update_post_meta($game_id, 'peril_current_audio', 'ding.mp3');
+
+        } else if($game_action == 'show_final_jeopardy_clue') {
+            update_post_meta($game_id,'peril_player_audio_for_type', 'audience_member');
+            update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+            update_post_meta($game_id, 'peril_current_audio', 'ding.mp3');
+        } else if($game_action == 'show_final_jeopardy') {
+            update_post_meta($game_id,'peril_player_audio_for_type', 'audience_member');
+            update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+            update_post_meta($game_id, 'peril_current_audio', 'thinking-music.mp3');
         }
     }
     $game_version = update_game_version($game_id);
