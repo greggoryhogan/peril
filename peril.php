@@ -80,3 +80,9 @@ function preload_peril_images() {
 	echo '<link rel="preload" href="'.PERIL_PLUGIN_URL.'/assets/img/peril.png" as="image">';
 	echo '<link rel="preload" href="'.PERIL_PLUGIN_URL.'/assets/img/peril-bg.jpg" as="image">';
 }
+
+/** flush permalinks on plugin activation */
+function peril_plugin_activate() {
+    flush_rewrite_rules();
+}
+register_activation_hook( __FILE__, 'peril_plugin_activate' );
