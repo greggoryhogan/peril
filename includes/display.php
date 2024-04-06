@@ -83,7 +83,7 @@ function get_game_content($post_id) {
                         $content .= '<div>';
                             $content .= '<button class="peril-button" id="claim-host">Join as host</button>';
                             $content .= '<button class="peril-button" id="claim-player">Join as a Competitor</button>';
-                            $content .= '<button id="audience-member" class="peril-button">Join as an audience member</button>';
+                            $content .= '<button id="audience-member" class="peril-button show">Join as an audience member</button>';
                         $content .= '</div>';
                         $content .= '<div>';
                             $content .= '<img src="'.PERIL_PLUGIN_URL .'assets/img/qrcode.jpg" />';
@@ -248,6 +248,19 @@ function show_started_game($post_id) {
                                 }
                                 $content .= '" data-action="'.$k.'">'.$v.'</div>';
                             }
+                        }
+                    }
+                    $peril_commercials = get_post_meta($post_id, 'peril_commercial');
+                    if(!empty($peril_commercials)) {
+                        foreach($peril_commercials as $k => $v) {
+                            $commercial_action = 'peril-show-commercial-'.$k;
+                            $count = $k + 1;
+                            $content .= '<div class="host-action';
+                            if($commercial_action == $current_action) {
+                                $content .= ' inactive';
+                            }
+                            $attachment_title = get_the_title($v);
+                            $content .= '" data-action="'.$commercial_action.'">Play &ldquo;'.$attachment_title.'&rdquo; commercial</div>';
                         }
                     }
                 $content .= '</div>';
@@ -593,6 +606,30 @@ function get_screen_content($game_id, $current_action, $player_type) {
                 }
                 $content .= '</div>';
                 break;
+        }
+        //commercials
+        if(strpos($current_action,'show-commercial') !== false ) {
+            $commercial_arr = explode('peril-show-commercial-',$current_action);
+            $commercial_number = $commercial_arr[1];
+            //$content .= $commercial_number;
+            $peril_commercials = get_post_meta($game_id, 'peril_commercial');
+            //$content .= print_r($peril_commercials, true);
+            if(!isset($peril_commercials[$commercial_number])) {
+                delete_post_meta($game_id,'peril_game_action');
+                update_game_version($game_id);
+            } else {
+                if(is_audience_member($game_id)) {
+                    $file_id = $peril_commercials[$commercial_number];
+                    $url = wp_get_attachment_url($file_id);
+                    $video = '<div class="peril-commercial"><video controls autoplay id="commercial"><source src="'.$url.'"></video></div>';
+                    $content .= '<script>document.getElementById("commercial").addEventListener("ended", function(e) {
+                        jQuery(".peril-commercial").html("").addClass("peril-intro").removeClass("peril-commercial");
+                    });</script>';
+                    $content .= $video;
+                } else {
+                    $content .= '<div class="question-text">Commercial Break</div>';
+                }
+            }
         }
         $content .= '</div>';
         return $content;

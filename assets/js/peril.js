@@ -66,6 +66,8 @@
 
     var timer = timerManagement();
 
+    
+
     function updateGame() {
         $.ajax({
             type: 'post',

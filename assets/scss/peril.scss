@@ -1057,3 +1057,16 @@ $gray: #1c1e2a;
 .spin {
     animation: spin 2000ms linear;
 }
+.peril-commercial {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    object-fit: contain;
+    video {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+}
