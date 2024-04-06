@@ -263,6 +263,18 @@ function show_started_game($post_id) {
                             $content .= '" data-action="'.$commercial_action.'">Play &ldquo;'.$attachment_title.'&rdquo; commercial</div>';
                         }
                     }
+                    $actions = array(
+                        'show_outro' => 'Start Peril Outro',
+                    );
+                    $rounds = 0;
+                    foreach($actions as $k => $v) {
+                        $rounds++;
+                        $content .= '<div class="host-action';
+                        if($rounds == $current_round) {
+                            $content .= ' inactive';
+                        }
+                        $content .= '" data-action="'.$k.'">'.$v.'</div>';
+                    }
                 $content .= '</div>';
                 $content .= '<div class="score-adjustments">';
                     $currently_answering = get_post_meta($post_id, 'peril_player_answering', true);
@@ -405,7 +417,7 @@ function get_screen_content($game_id, $current_action, $player_type) {
             case 'show_clue':
                 $show_timer = true;
                 if(in_array($concat, $dbl_jeopardy)) {
-                    $time_delay = 5000;
+                    $time_delay = 7000;
                     $peril_dd_wager = get_post_meta($game_id, 'peril_dd_wager', true);
                     if($peril_dd_wager == '') {
                         $show_timer = false;
@@ -414,8 +426,9 @@ function get_screen_content($game_id, $current_action, $player_type) {
                     if(is_audience_member($game_id)) {
                         $spin = 'spin';
                     }
-                    $content .= '<div class="question-text daily-double '.$spin.'">Daily Double!</div>';
+                    
                     if($player_type == 'host') {
+                        $content .= '<div class="question-text">Daily double!</div>';
                         $player_name = get_post_meta($game_id, "peril_player_name_$previously_answering", true);
                         $content .= '<div>Contestant guessing: '.$player_name.'</div>';
                         $player_score = get_post_meta($game_id, "peril_player_{$previously_answering}_score", true);
@@ -433,6 +446,8 @@ function get_screen_content($game_id, $current_action, $player_type) {
                         //$category = array_search($board_array[$current_round][$category]);
                         $content .= '<div>Category: '.$category.'</div>';
                         $content .= '<div class="peril-form-field row wager"><input type="text" placeholder="Wager" id="input-wager" data-max="'.$player_score.'" /><button class="peril-button" id="submit-wager">Set Wager</button>';
+                    } else {
+                        $content .= '<div class="peril-intro dd"><div class="question-text daily-double '.$spin.'">Daily Double!</div></div>';
                     }
                 } else {
                     $time_delay = 0;
@@ -599,10 +614,26 @@ function get_screen_content($game_id, $current_action, $player_type) {
                     }
                 }
                 $content .= '<div id="winners">';
-                foreach($winners as $winner) {
-                    $username = get_post_meta($game_id, "peril_player_name_$winner", true);
-                    $score = get_post_meta($game_id,"peril_player_{$winner}_score", true);
-                    $content .= '<div><div>Congratulations '.$username.'! You won!</div><div>$'.number_format($score, 0).'</div></div>';
+                if(count($winners) > 1) {
+                    $content .= '<div>We have a tie!</div>';
+                    $winnernames = array();
+                    foreach($winners as $winner) {
+                        $username = get_post_meta($game_id, "peril_player_name_$winner", true);
+                        $winnernames[] = $username;
+                        $score = get_post_meta($game_id,"peril_player_{$winner}_score", true);
+                        //$content .= '<div><div>Congratulations '.$username.'! You won!</div><div>$'.number_format($score, 0).'</div></div>';
+                    }
+                    $content .= '<div><span style="color:#eea44b;">'.implode('</span> and <span style="color:#eea44b;">',$winnernames).'</span> both scored $'.number_format($score, 0).'</div>';
+                    $content .= '<div>Each player, please choose a number between 1 and 35. <br>The host will determine who is closest!</div>';
+                    if($player_type == 'host') {
+                        $content .= '<div>Winning number: <span style="color:#eea44b;">'.rand(1,35).'</span></div>';
+                    }
+                } else {
+                    foreach($winners as $winner) {
+                        $username = get_post_meta($game_id, "peril_player_name_$winner", true);
+                        $score = get_post_meta($game_id,"peril_player_{$winner}_score", true);
+                        $content .= '<div><div>Congratulations <span style="color:#eea44b;">'.$username.'</span>!</div><div>With a total of $'.number_format($score, 0).', you won!</div></div>';
+                    }
                 }
                 $content .= '</div>';
                 break;
@@ -635,6 +666,7 @@ function get_screen_content($game_id, $current_action, $player_type) {
         return $content;
     } else {
         //show board for now
+        $class = '';
         if($current_round != 3) {
             $seen = get_post_meta($game_id, "peril_player_{$uuid}_seen_round_{$current_round}_board", true);
             if($seen == '') {
@@ -884,13 +916,13 @@ function display_game_board($game_id, $game_round = 1, $extra_class = '') {
                     if($score >= 0) {
                         $scores = '$'.number_format($score, 0);
                     } else {
-                        $score = $score * -1;
-                        $scores = '- $'.number_format($score, 0);
+                        $negativescore = $score * -1;
+                        $scores = '- $'.number_format($negativescore, 0);
                     }
-                    $content .= '<p>You have '.$scores.' to wager.</p>';
-                    if($score == 0) {
-                        $content .= '<p>Sorry, you don&rsquo;t have enough points to continue</p>';
+                    if($score <= 0) {
+                        $content .= '<p>Sorry, with '.$scores.', you don&rsquo;t have enough to continue</p>';
                     } else {
+                        $content .= '<p>You have '.$scores.' to wager.</p>';
                         $content .= '<div><p>Please enter your final wager</p></div>';
                         $content .= '<div class="final-input-container">';
                             $wager = get_post_meta($game_id,"peril_player_{$peril_uuid}_wager", true);

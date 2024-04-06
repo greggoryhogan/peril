@@ -839,7 +839,7 @@ $gray: #1c1e2a;
             @for $i from 2 through 6 {
                 &:nth-child(#{$i}) {
                     animation: 1s ease-in-out both timer-item;
-                    $delay: #{($i - 0) * 2000};
+                    $delay: #{($i - 0) * 1500};
                     animation-delay: #{$delay}ms;
                     
                 }
@@ -882,6 +882,18 @@ $gray: #1c1e2a;
             background-position: center;
             background-repeat: no-repeat;
         }
+        &.dd {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            &:after {
+                display: none;
+            }
+            .question-text {
+                z-index: 999;
+                position: relative;
+            }
+        }
     }
     padding: 3vw;
     box-sizing: border-box;
@@ -893,7 +905,12 @@ $gray: #1c1e2a;
         z-index: 999;
     }
     &.current-player-answering {
-        background: #138510;
+        /*background: #fff;
+        .question-text {
+            color: $blue;
+            text-shadow: 2px 3px 5px rgba(0,0,0,.3);
+
+        }*/
     }
     &.host {
         .question-text {
@@ -1030,27 +1047,18 @@ $gray: #1c1e2a;
         transform: sclae(1);
     }
 }
-@-moz-keyframes spin {
-    to { -moz-transform: rotate(360deg); }
-}
-@-webkit-keyframes spin {
-    to { -webkit-transform: rotate(360deg); }
-}
-@keyframes spin {
-    to {transform:rotate(360deg);}
-}
 @keyframes spin {
     0% {
-        transform:rotate(0deg) scale(.25);
+        transform:scale(.25,-1);
     }
     33% {
-        transform:rotate(360deg) scale(.5);
+        transform:scale(.5,1);
     }
     66% {
-        transform:rotate(720deg) scale(.75);
+        transform:scale(.75,-1);
     }
     100% {
-        transform:rotate(1080deg) scale(1);
+        transform:scale(1,1);
     }
 }
 

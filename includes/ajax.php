@@ -266,6 +266,15 @@ function host_action() {
             update_post_meta($game_id,'peril_player_audio_for_type', 'audience_member');
             update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
             update_post_meta($game_id, 'peril_current_audio', 'thinking-music.mp3');
+        } else if($game_action == 'show_guesses') {
+            update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+            update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+            update_post_meta($game_id, 'peril_current_audio', 'ding.mp3');
+        } else if($game_action == 'show_outro') {
+            update_post_meta($game_id,'peril_player_audio_for_type', 'audience_member');
+            update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+            update_post_meta($game_id, 'peril_current_audio', 'peril-intro.mp3');
+            update_post_meta($game_id,'peril_game_action', 'game_intro');
         }
     }
     $game_version = update_game_version($game_id);

@@ -45,7 +45,7 @@
         var timer;
         return {
             start() {
-                var counter = 120;
+                var counter = 90;
                 timer = setInterval(function () {
                     if (counter == 0) {
                         clearInterval(timer);
@@ -53,7 +53,6 @@
                         peril_music.src = peril.music_dir + audio_file;
                         //alert(response.audio_file);
                         $('#play-peril-music').trigger('click');
-                        
                     }
                     counter--;
                 }, 100);
