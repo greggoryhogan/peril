@@ -266,7 +266,7 @@ function host_action() {
             update_post_meta($game_id,'peril_player_audio_for_type', 'audience_member');
             update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
             update_post_meta($game_id, 'peril_current_audio', 'thinking-music.mp3');
-        } else if($game_action == 'show_guesses') {
+        } else if($game_action == 'show_guesses' || $game_action == 'end_final_jeopardy_guesses') {
             update_post_meta($game_id,'peril_player_audio_for_type', 'none');
             update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
             update_post_meta($game_id, 'peril_current_audio', 'ding.mp3');
@@ -357,14 +357,17 @@ function player_buzz() {
     $game_id = absint($_POST['game_id']);
     $user_id = sanitize_text_field($_POST['user_id']);
     $peril_current_category = get_post_meta($game_id, 'peril_current_category', true);
+    $wonbuzz = 0;
     if($peril_current_category != '') {
         $currently_answering = get_post_meta($game_id, 'peril_player_answering', true);
         $already_buzzed = get_post_meta($game_id, 'peril_players_buzzed', true);
         if(!is_array($already_buzzed)) {
             $already_buzzed = array();
+            $game_version = get_game_version($game_id);
         }
         if(in_array($user_id, $already_buzzed)) {
             //nothing, they got a question wrong
+            $game_version = get_game_version($game_id);
         } else if($currently_answering == '') {
             update_post_meta($game_id,'peril_player_audio_for_type', 'none');
             update_post_meta($game_id, 'peril_player_audio_for_player', $user_id);
@@ -373,6 +376,7 @@ function player_buzz() {
             $already_buzzed[] = $user_id;
             update_post_meta($game_id, 'peril_players_buzzed', $already_buzzed);
             $game_version = update_game_version($game_id);
+            $wonbuzz = 1;
         } 
     } else {
         $game_version = get_game_version($game_id);
@@ -381,6 +385,7 @@ function player_buzz() {
         array(
             'game_version' => $game_version,
             'game_content' => get_game_content($game_id),
+            'wonbuzz' => $wonbuzz,
         )
     );
 }
@@ -578,6 +583,9 @@ function final_action() {
     $action = sanitize_text_field($_POST['final_action']);
     update_post_meta($game_id,'peril_game_action', $action);
     update_post_meta($game_id,'peril_final_player_displaying',$player);
+    update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+    update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+    update_post_meta($game_id, 'peril_current_audio', 'ding.mp3');
     if($action == 'player_final_is_correct') {
         $score = get_post_meta($game_id,"peril_player_{$player}_score", true);
         $wager = get_post_meta($game_id, "peril_player_{$player}_wager", true);

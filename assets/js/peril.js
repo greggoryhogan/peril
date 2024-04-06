@@ -78,7 +78,7 @@
                 'user_id' : uuid,
             },
             success: function(response) {
-                if(response.needs_update == 1 && !processing_request) {
+                if(response.needs_update == 1) {
                     timer.stop();
                     game_version = response.game_version;
                     $('#game-content').html(response.game_content);
@@ -91,7 +91,7 @@
                     } else {
                         timer.stop();
                     }
-                    if(player_type == response.player_audio_for_type || uuid == response.player_audio_for_player) {
+                        if(player_type == response.player_audio_for_type || uuid == response.player_audio_for_player) {
                         peril_music.src = peril.music_dir + response.audio_file;
                         //alert(response.audio_file);
                         $('#play-peril-music').trigger('click');
@@ -271,6 +271,10 @@
                     processing_request = false;
                     game_version = response.game_version;
                     $('#game-content').html(response.game_content);
+                    if(response.wonbuzz == 1) {
+                        peril_music.src = peril.music_dir + 'ding.mp3';
+                        $('#play-peril-music').trigger('click');
+                    }
                 }
             });
         } else if(player_type == 'audience_member') {

@@ -399,11 +399,11 @@ function get_screen_content($game_id, $current_action, $player_type) {
             case 'show_category_3':
             case 'show_category_4':
             case 'show_category_5':
-                $board_array = maybe_unserialize(get_post_meta($game_id, 'peril_game_board', true));
+                $board_array = $board_array = get_board_array($game_id);
                 $keys = array_keys($board_array[$current_round]);
                 //$content .= print_r($keys, true);
                 if($current_action == 'show_category_1') {
-                    $content .= '<div class="question-text slide-left">'.$keys[0].'</div>';
+                    $content .= '<div class="question-text">'.$keys[0].'</div>';
                 } else if($current_action == 'show_category_2') {
                     $content .= '<div class="question-text slide-left">'.$keys[1].'</div>';
                 }  else if($current_action == 'show_category_3') {
@@ -413,6 +413,7 @@ function get_screen_content($game_id, $current_action, $player_type) {
                 } else if($current_action == 'show_category_5') {
                     $content .= '<div class="question-text slide-left">'.$keys[4].'</div>';
                 }
+                $content .= '<div class="peril-intro question-category fadeout"></div>';
                 break;
             case 'show_clue':
                 $show_timer = true;
@@ -511,15 +512,17 @@ function get_screen_content($game_id, $current_action, $player_type) {
                         $content .= $key;
                     }
                     if(isset($board_array[$current_round][$key])) {
-                        if($player_type != 'host') {
+                        if($player_type == 'audience_member') {
                            $content .= '<div style="margin-bottom: 15px;">'.$key.'</div>';
-                        }
-                        $second_key = array_key_first($board_array[$current_round][$key]);
-                        if($second_key !== false) {
-                            if(isset($board_array[$current_round][$key][$second_key])) {
-                                $answer = $board_array[$current_round][$key][$second_key]['answer'];
-                                $content .= '<div class="question-text">'.$answer.'</div>';
-                            }
+                        
+                            $second_key = array_key_first($board_array[$current_round][$key]);
+                            if($second_key !== false) {
+                                if(isset($board_array[$current_round][$key][$second_key])) {
+                                    $answer = $board_array[$current_round][$key][$second_key]['answer'];
+                                    $content .= '<div class="question-text">'.$answer.'</div>';
+                                }
+                        
+                            }    
                         } 
                     }
                     $players = get_post_meta($game_id, 'peril_game_players');
@@ -632,7 +635,7 @@ function get_screen_content($game_id, $current_action, $player_type) {
                     foreach($winners as $winner) {
                         $username = get_post_meta($game_id, "peril_player_name_$winner", true);
                         $score = get_post_meta($game_id,"peril_player_{$winner}_score", true);
-                        $content .= '<div><div>Congratulations <span style="color:#eea44b;">'.$username.'</span>!</div><div>With a total of $'.number_format($score, 0).', you won!</div></div>';
+                        $content .= '<div><div>Congratulations <span style="color:#eea44b;">'.$username.'</span></div><div>With a total of $'.number_format($score, 0).', you won!</div></div>';
                     }
                 }
                 $content .= '</div>';
@@ -675,7 +678,7 @@ function get_screen_content($game_id, $current_action, $player_type) {
                 update_post_meta($game_id,'peril_player_audio_for_type', 'audience_member');
             } else {
                 $class = 'has-seen';
-                update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+                //update_post_meta($game_id,'peril_player_audio_for_type', 'none');
             }
         }
         $content = display_game_board($game_id, $current_round, $class);
@@ -812,14 +815,8 @@ function peril_create_game_callback() {
     return $form;
 }
 
-function display_game_board($game_id, $game_round = 1, $extra_class = '') {
+function get_board_array($game_id) {
     $board_array = maybe_unserialize(get_post_meta($game_id, 'peril_game_board', true));
-    $used_answers_array = maybe_unserialize(get_post_meta($game_id, 'peril_game_used_answers', true));
-    if(!is_array($used_answers_array)) {
-        $used_answers_array = array();
-    }
-    //$board_array = ''; //for testing
-    $content = '';
     if($board_array == '' || (is_array($board_array) && empty($board_array))) {
         delete_post_meta($game_id, 'round_1_double_jeopardy');
         delete_post_meta($game_id, 'round_2_double_jeopardy');
@@ -882,6 +879,17 @@ function display_game_board($game_id, $game_round = 1, $extra_class = '') {
             add_post_meta( $game_id, "round_2_double_jeopardy", "$dbl_2" );
         }
     } 
+    return $board_array;
+}
+
+function display_game_board($game_id, $game_round = 1, $extra_class = '') {
+    $board_array = get_board_array($game_id);
+    $used_answers_array = maybe_unserialize(get_post_meta($game_id, 'peril_game_used_answers', true));
+    if(!is_array($used_answers_array)) {
+        $used_answers_array = array();
+    }
+    //$board_array = ''; //for testing
+    $content = '';
     if(isset($board_array[$game_round])) {
         $content .= '<div class="game-board round-'.$game_round.' '.$extra_class.'">';
             if($game_round == 3) {

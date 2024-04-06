@@ -82,7 +82,7 @@ $gray: #1c1e2a;
             animation: 1s ease-in-out both slide-left;
             animation-delay: 100ms;
             width: 90vw;
-            margin: 0 auto
+            margin: 0 auto;
         }
     }
     button {
@@ -125,6 +125,7 @@ $gray: #1c1e2a;
             height: 100vh;
             background: $blue;
             cursor: pointer;
+            z-index: 9999;
         }
         width: 100%;
         display: flex;
@@ -479,6 +480,19 @@ $gray: #1c1e2a;
     }
 }
 
+@keyframes fade-out {
+    10% {
+      opacity: 1;
+    }
+    
+    70% {
+      opacity: 0;
+    }
+    100% {
+        opacity: 0;
+      }
+}
+
 .peril-button {
     color: $gray;
     background-color: rgba(255,255,255,1);
@@ -808,7 +822,7 @@ $gray: #1c1e2a;
             top: 0;
             bottom: auto;
             overflow: auto;
-            display: block;
+            /*display: block;*/
         }
     }
     .no-answer {
@@ -894,6 +908,10 @@ $gray: #1c1e2a;
                 position: relative;
             }
         }
+        &.fadeout {
+            animation: .5s ease-in-out both fade-out;
+            animation-delay: .5s;
+        }
     }
     padding: 3vw;
     box-sizing: border-box;
@@ -905,12 +923,11 @@ $gray: #1c1e2a;
         z-index: 999;
     }
     &.current-player-answering {
-        /*background: #fff;
+        background: #fff;
         .question-text {
-            color: $blue;
-            text-shadow: 2px 3px 5px rgba(0,0,0,.3);
-
-        }*/
+            display: none;
+        }
+        
     }
     &.host {
         .question-text {
