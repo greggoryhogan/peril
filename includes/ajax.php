@@ -277,6 +277,11 @@ function host_action() {
             update_post_meta($game_id,'peril_game_action', 'game_intro');
         }
     }
+    if(strpos($game_action,'show-commercial') !== false ) {
+        update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+        update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+        update_post_meta($game_id, 'peril_current_audio', 'ding.mp3');
+    }
     $game_version = update_game_version($game_id);
     wp_send_json(array(
         'game_content' => get_game_content($game_id),

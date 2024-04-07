@@ -655,7 +655,8 @@ function get_screen_content($game_id, $current_action, $player_type) {
                 if(is_audience_member($game_id)) {
                     $file_id = $peril_commercials[$commercial_number];
                     $url = wp_get_attachment_url($file_id);
-                    $video = '<div class="peril-commercial"><video controls autoplay id="commercial"><source src="'.$url.'"></video></div>';
+                    $video = '<div class="peril-commercial-bg"><video controls autoplay muted id="commercial-bg"><source src="'.$url.'"></video></div>';
+                    $video .= '<div class="peril-commercial"><video controls autoplay id="commercial"><source src="'.$url.'"></video></div>';
                     $content .= '<script>document.getElementById("commercial").addEventListener("ended", function(e) {
                         jQuery(".peril-commercial").html("").addClass("peril-intro").removeClass("peril-commercial");
                     });</script>';
