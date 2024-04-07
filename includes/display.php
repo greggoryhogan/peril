@@ -579,6 +579,7 @@ function get_screen_content($game_id, $current_action, $player_type) {
                         
                         
                     } 
+                    $content .= '<div>'.$board_array[$current_round][$key][$second_key]['question'].'</div>';
                     $players = get_post_meta($game_id, 'peril_game_players');
                     $content .= show_final_player_score_actions($game_id, $players);
                     $content .= '<button id="show_winner" class="peril-button">Show Winner</button>';

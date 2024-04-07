@@ -348,6 +348,11 @@ function create_game() {
             add_post_meta($game_csv, 'peril_csv_game_title', $game_name);
         }
         $message = 'Game created! <a href="'.get_permalink($id).'">Continue to game</a>';
+        //add commercials
+        $commercial_ids = array(8,11,14,17,18,20,21);
+        foreach($commercial_ids as $attachment_id) {
+            add_post_meta($id, 'peril_commercial', $attachment_id);
+        }
         wp_send_json(array(
             'html' => $message
         ));
