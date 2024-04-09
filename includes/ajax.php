@@ -349,7 +349,7 @@ function create_game() {
         }
         $message = 'Game created! <a href="'.get_permalink($id).'">Continue to game</a>';
         //add commercials
-        $commercial_ids = array(8,11,14,17,18,20,21);
+        $commercial_ids = array(8,11,14,17,18,26);
         foreach($commercial_ids as $attachment_id) {
             add_post_meta($id, 'peril_commercial', $attachment_id);
         }
