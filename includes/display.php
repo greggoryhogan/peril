@@ -335,6 +335,7 @@ function get_screen_content($game_id, $current_action, $player_type) {
     if($current_action != '') {
         $board_array = maybe_unserialize(get_post_meta($game_id, 'peril_game_board', true));
         $answering = 'no-answer';
+        $had_previous_buzz = get_post_meta($game_id, 'peril_clue_had_buzz', true);
         $currently_answering = get_post_meta($game_id, 'peril_player_answering', true);
         if($currently_answering != '') {
             $answering = 'player-answering';
@@ -358,6 +359,9 @@ function get_screen_content($game_id, $current_action, $player_type) {
                 if($uuid == $previously_answering) {
                     $answering .= ' current-player-answering';
                 }
+            }
+            if($had_previous_buzz != '') {
+                $zoom = false;
             }
         }
         $zoom_class = '';
@@ -451,7 +455,11 @@ function get_screen_content($game_id, $current_action, $player_type) {
                         $content .= '<div class="peril-intro dd"><div class="question-text daily-double '.$spin.'">Daily Double!</div></div>';
                     }
                 } else {
-                    $time_delay = 0;
+                    if($currently_answering != '' || $had_previous_buzz != '') {
+                        $time_delay = 0;
+                    } else {
+                        $time_delay = 5000;
+                    }
                     if(isset($board_array[$current_round][$category][$value])) {
                         if($player_type == 'host') {
                             $content .= $category.': $'.$value;

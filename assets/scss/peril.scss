@@ -722,6 +722,8 @@ $gray: #1c1e2a;
         flex-wrap: wrap;
         @media (min-width: 767px) {
             width: 50%;
+            max-height: 90vh;
+            overflow-x: auto;
         }
         @media (max-width: 767px) {
             flex-direction: column;
@@ -802,9 +804,12 @@ $gray: #1c1e2a;
     &.inactive {
         @media (min-width: 767px) {
             bottom: -100vh;
+            height: 100vh;
         }
         @media (max-width: 767px) {
             top: -200vh;
+            height: 200vh;
+            overflow: hidden;
         }
         
     }
@@ -848,12 +853,12 @@ $gray: #1c1e2a;
             border: 2px solid #fff;
             &:nth-child(1) {
                 animation: 1s ease-in-out both timer-item;
-                animation-delay: 2000ms;
+                animation-delay: 1000ms;
             }
             @for $i from 2 through 6 {
                 &:nth-child(#{$i}) {
                     animation: 1s ease-in-out both timer-item;
-                    $delay: #{($i - 0) * 1500};
+                    $delay: #{($i - 0) * 1250};
                     animation-delay: #{$delay}ms;
                     
                 }

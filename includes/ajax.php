@@ -167,6 +167,7 @@ function host_action() {
         if($game_action == 'show_clue') {
             $category = sanitize_text_field( $_POST['category'] );
             $value = absint( $_POST['value'] );
+            delete_post_meta($game_id, 'peril_clue_had_buzz');
             update_post_meta($game_id, 'peril_current_category', $category);
             update_post_meta($game_id, 'peril_current_value', $value);
             $concat = "$category:$value";
@@ -469,6 +470,7 @@ function player_response() {
         } else {
             //subtract points
             $score = intval($score) - absint($peril_current_value);
+            update_post_meta($game_id, 'peril_clue_had_buzz', 1);
         }
         //update their score
         update_post_meta($game_id,"peril_player_{$currently_answering}_score", $score);

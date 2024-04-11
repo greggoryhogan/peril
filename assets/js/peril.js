@@ -45,7 +45,7 @@
         var timer;
         return {
             start() {
-                var counter = 90;
+                var counter = 75;
                 timer = setInterval(function () {
                     if (counter == 0) {
                         clearInterval(timer);
