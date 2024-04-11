@@ -22,9 +22,7 @@ function check_peril_game_version() {
     } else {
         wp_send_json(
             array(
-                'needs_update' => $needs_update,
-                'game_version' => $current_version,
-                'game_content' => get_game_content($game_id)
+                'needs_update' => $needs_update
             )
         );
     }

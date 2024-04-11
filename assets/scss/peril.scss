@@ -18,7 +18,7 @@ $gray: #1c1e2a;
     background-color: $blue;
     padding: 3vw;
     margin: 0;
-    position: absolute;
+    position: relative;
     height: 100%;
     @media (max-width: $mobile) {
         position: absolute;
@@ -1032,8 +1032,9 @@ $gray: #1c1e2a;
 }
 
 .show-play {
-    position: absolute;
+    position: fixed;
     z-index: 999;
+
 }
 .welcome-actions {
     display: flex;
