@@ -407,7 +407,7 @@ function get_screen_content($game_id, $current_action, $player_type) {
                 $keys = array_keys($board_array[$current_round]);
                 //$content .= print_r($keys, true);
                 if($current_action == 'show_category_1') {
-                    $content .= '<div class="question-text">'.$keys[0].'</div>';
+                    $content .= '<div class="question-text slide-left">'.$keys[0].'</div>';
                 } else if($current_action == 'show_category_2') {
                     $content .= '<div class="question-text slide-left">'.$keys[1].'</div>';
                 }  else if($current_action == 'show_category_3') {
