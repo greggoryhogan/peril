@@ -23,6 +23,7 @@ $gray: #1c1e2a;
     @media (max-width: $mobile) {
         position: absolute;
         min-height: 100%;
+        height: auto;
         top: 0;
         bottom: auto;
     }
@@ -1033,7 +1034,7 @@ $gray: #1c1e2a;
 
 .show-play {
     position: fixed;
-    z-index: 999;
+    z-index: -1;
 
 }
 .welcome-actions {
@@ -1057,6 +1058,9 @@ $gray: #1c1e2a;
         }
         img {
             border-radius: 10px;
+            @media (max-width: $mobile) {
+                display: none;
+            }
         }
     }
 }

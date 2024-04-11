@@ -52,7 +52,9 @@
                         audio_file = 'times-up.mp3';
                         peril_music.src = peril.music_dir + audio_file;
                         //alert(response.audio_file);
-                        $('#play-peril-music').trigger('click');
+                        if($('.question-timer').length) {
+                            $('#play-peril-music').trigger('click');
+                        }
                     }
                     counter--;
                 }, 100);
