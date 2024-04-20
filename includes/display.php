@@ -241,6 +241,7 @@ function show_started_game($post_id) {
                             $actions['show_category_3'] = 'Show Category 3';
                             $actions['show_category_4'] = 'Show Category 4';
                             $actions['show_category_5'] = 'Show Category 5';
+                            $actions['show_category_6'] = 'Show Category 6';
                             foreach($actions as $k => $v) {
                                 $content .= '<div class="host-action';
                                 if($k == $current_action) {
@@ -403,6 +404,7 @@ function get_screen_content($game_id, $current_action, $player_type) {
             case 'show_category_3':
             case 'show_category_4':
             case 'show_category_5':
+            case 'show_category_6':
                 $board_array = $board_array = get_board_array($game_id);
                 $keys = array_keys($board_array[$current_round]);
                 //$content .= print_r($keys, true);
@@ -416,6 +418,8 @@ function get_screen_content($game_id, $current_action, $player_type) {
                     $content .= '<div class="question-text slide-left">'.$keys[3].'</div>';
                 } else if($current_action == 'show_category_5') {
                     $content .= '<div class="question-text slide-left">'.$keys[4].'</div>';
+                } else if($current_action == 'show_category_6') {
+                    $content .= '<div class="question-text slide-left">'.$keys[5].'</div>';
                 }
                 $content .= '<div class="peril-intro question-category fadeout"></div>';
                 break;

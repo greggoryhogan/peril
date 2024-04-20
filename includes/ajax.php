@@ -150,7 +150,8 @@ function host_action() {
             'show_category_2',
             'show_category_3',
             'show_category_4',
-            'show_category_5'
+            'show_category_5',
+            'show_category_6'
         );
         if($previous_action != '' && $previous_action != 'show_scores') {
             update_post_meta($game_id,'peril_game_action', $previous_action);
@@ -217,6 +218,9 @@ function host_action() {
             update_post_meta($game_id,'peril_player_audio_for_type', 'none');
             update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
         } else if($game_action == 'show_category_5') {
+            update_post_meta($game_id,'peril_player_audio_for_type', 'none');
+            update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
+        } else if($game_action == 'show_category_6') {
             update_post_meta($game_id,'peril_player_audio_for_type', 'none');
             update_post_meta($game_id, 'peril_player_audio_for_player', 'none');
         } else if($game_action == 'goto_round_1') {
@@ -348,7 +352,7 @@ function create_game() {
         }
         $message = 'Game created! <a href="'.get_permalink($id).'">Continue to game</a>';
         //add commercials
-        $commercial_ids = array(8,11,14,17,18,26, 27, 28);
+        $commercial_ids = array(8,11,14,17,18,26, 27,28,32);
         foreach($commercial_ids as $attachment_id) {
             add_post_meta($id, 'peril_commercial', $attachment_id);
         }
