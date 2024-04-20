@@ -468,7 +468,10 @@ function get_screen_content($game_id, $current_action, $player_type) {
                         if($player_type == 'host') {
                             $content .= $category.': $'.$value;
                         }
-                        $content .= '<div class="question-text">'.$board_array[$current_round][$category][$value]['answer'].'</div>';
+                        if($player_type != 'contestant') {
+                            //dont show clue to player's screens
+                            $content .= '<div class="question-text">'.$board_array[$current_round][$category][$value]['answer'].'</div>';
+                        }
                         if($player_type == 'host') {
                             $content .= '<div>Answer: '.$board_array[$current_round][$category][$value]['question'].'</div>';
                             if($currently_answering != '') {
