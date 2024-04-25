@@ -136,8 +136,9 @@ $gray: #1c1e2a;
             bottom: -100vh;
         }
         @media (min-width: $mobile) {
-            justify-content: space-around;
+            justify-content: center;
             flex-wrap: wrap;
+            gap: 50px 20px;
         }
         @media (max-width: $mobile) {
             flex-direction: column;
@@ -146,8 +147,8 @@ $gray: #1c1e2a;
             width: calc(100% - 2vw);
             box-sizing: border-box;
             bottom: 1vw;
+            
         }
-        gap: 20px;
         padding: 20px;
         box-sizing: border-box;
         .score {
@@ -170,11 +171,25 @@ $gray: #1c1e2a;
                 font-family: "lindsey-signature", sans-serif;
                 font-weight: 400;
                 font-style: normal;
-                @media (min-width: $mobile) {
-                    font-size: 2rem;
+            }
+
+            @media (min-width: $mobile) {
+                .name {
+                    font-size: 3vw;
+                    line-height: 4vw;
                 }
-                @media (max-width: $mobile) {
-                    font-size: 48px;
+                .currency {
+                    font-size: 4vw;
+                }
+            }
+            @media (max-width: $mobile) {
+                .name {
+                    font-size: 18px;
+                    line-height: 35px;
+                }
+                .currency {
+                    font-size: 36px;
+                    margin-top: 15px;
                 }
             }
         }
@@ -200,22 +215,23 @@ $gray: #1c1e2a;
         }
         &.score-recap {
             .score {
-                width: auto;
                 @media (min-width: $mobile) {
+                    width: 30%;
                     .name {
-                        font-size: 5vw;
+                        font-size: 3vw;
+                        line-height: 4vw;
                     }
                     .currency {
-                        font-size: 7vw;
+                        font-size: 4vw;
                     }
                 }
                 @media (max-width: $mobile) {
                     .name {
-                        font-size: 48px;
-                        line-height: 60px;
+                        font-size: 18px;
+                        line-height: 35px;
                     }
                     .currency {
-                        font-size: 56px;
+                        font-size: 36px;
                         margin-top: 15px;
                     }
                 }

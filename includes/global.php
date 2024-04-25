@@ -32,6 +32,9 @@ function get_player_scores($players, $game_id, $class = '') {
             $score = 0;
         }
         $username = get_post_meta($game_id, "peril_player_name_$player", true);
+        if($username == '') {
+            $username = $player;
+        }
         $myself = '';
         if($player == $uuid) {
             $myself = 'current_player';

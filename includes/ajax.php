@@ -352,10 +352,10 @@ function create_game() {
         }
         $message = 'Game created! <a href="'.get_permalink($id).'">Continue to game</a>';
         //add commercials
-        $commercial_ids = array(8,11,14,17,18,26, 27,28,32);
+        /*$commercial_ids = array(8,11,14,17,18,26, 27,28,32);
         foreach($commercial_ids as $attachment_id) {
             add_post_meta($id, 'peril_commercial', $attachment_id);
-        }
+        }*/
         wp_send_json(array(
             'html' => $message
         ));
