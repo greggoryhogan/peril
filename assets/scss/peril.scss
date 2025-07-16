@@ -18,12 +18,11 @@ $gray: #1c1e2a;
     background-color: $blue;
     padding: 3vw;
     margin: 0;
-    position: relative;
+    position: absolute;
     height: 100%;
     @media (max-width: $mobile) {
         position: absolute;
         min-height: 100%;
-        height: auto;
         top: 0;
         bottom: auto;
     }
@@ -83,7 +82,7 @@ $gray: #1c1e2a;
             animation: 1s ease-in-out both slide-left;
             animation-delay: 100ms;
             width: 90vw;
-            margin: 0 auto;
+            margin: 0 auto
         }
     }
     button {
@@ -126,7 +125,6 @@ $gray: #1c1e2a;
             height: 100vh;
             background: $blue;
             cursor: pointer;
-            z-index: 9999;
         }
         width: 100%;
         display: flex;
@@ -136,9 +134,8 @@ $gray: #1c1e2a;
             bottom: -100vh;
         }
         @media (min-width: $mobile) {
-            justify-content: center;
+            justify-content: space-around;
             flex-wrap: wrap;
-            gap: 50px 20px;
         }
         @media (max-width: $mobile) {
             flex-direction: column;
@@ -147,8 +144,8 @@ $gray: #1c1e2a;
             width: calc(100% - 2vw);
             box-sizing: border-box;
             bottom: 1vw;
-            
         }
+        gap: 20px;
         padding: 20px;
         box-sizing: border-box;
         .score {
@@ -171,25 +168,11 @@ $gray: #1c1e2a;
                 font-family: "lindsey-signature", sans-serif;
                 font-weight: 400;
                 font-style: normal;
-            }
-
-            @media (min-width: $mobile) {
-                .name {
-                    font-size: 3vw;
-                    line-height: 4vw;
+                @media (min-width: $mobile) {
+                    font-size: 2rem;
                 }
-                .currency {
-                    font-size: 4vw;
-                }
-            }
-            @media (max-width: $mobile) {
-                .name {
-                    font-size: 18px;
-                    line-height: 35px;
-                }
-                .currency {
-                    font-size: 36px;
-                    margin-top: 15px;
+                @media (max-width: $mobile) {
+                    font-size: 48px;
                 }
             }
         }
@@ -215,23 +198,22 @@ $gray: #1c1e2a;
         }
         &.score-recap {
             .score {
+                width: auto;
                 @media (min-width: $mobile) {
-                    width: 30%;
                     .name {
-                        font-size: 3vw;
-                        line-height: 4vw;
+                        font-size: 5vw;
                     }
                     .currency {
-                        font-size: 4vw;
+                        font-size: 7vw;
                     }
                 }
                 @media (max-width: $mobile) {
                     .name {
-                        font-size: 18px;
-                        line-height: 35px;
+                        font-size: 48px;
+                        line-height: 60px;
                     }
                     .currency {
-                        font-size: 36px;
+                        font-size: 56px;
                         margin-top: 15px;
                     }
                 }
@@ -497,19 +479,6 @@ $gray: #1c1e2a;
     }
 }
 
-@keyframes fade-out {
-    10% {
-      opacity: 1;
-    }
-    
-    70% {
-      opacity: 0;
-    }
-    100% {
-        opacity: 0;
-      }
-}
-
 .peril-button {
     color: $gray;
     background-color: rgba(255,255,255,1);
@@ -696,6 +665,7 @@ $gray: #1c1e2a;
     bottom: 3vw;
     left: 50%;
     transform: translateX(-50%);
+    width: 100%;
     font-size: 18px;
     cursor: pointer;
     z-index: 999;
@@ -738,8 +708,6 @@ $gray: #1c1e2a;
         flex-wrap: wrap;
         @media (min-width: 767px) {
             width: 50%;
-            max-height: 90vh;
-            overflow-x: auto;
         }
         @media (max-width: 767px) {
             flex-direction: column;
@@ -820,12 +788,9 @@ $gray: #1c1e2a;
     &.inactive {
         @media (min-width: 767px) {
             bottom: -100vh;
-            height: 100vh;
         }
         @media (max-width: 767px) {
             top: -200vh;
-            height: 200vh;
-            overflow: hidden;
         }
         
     }
@@ -843,7 +808,7 @@ $gray: #1c1e2a;
             top: 0;
             bottom: auto;
             overflow: auto;
-            /*display: block;*/
+            display: block;
         }
     }
     .no-answer {
@@ -869,12 +834,12 @@ $gray: #1c1e2a;
             border: 2px solid #fff;
             &:nth-child(1) {
                 animation: 1s ease-in-out both timer-item;
-                animation-delay: 1000ms;
+                animation-delay: 2000ms;
             }
             @for $i from 2 through 6 {
                 &:nth-child(#{$i}) {
                     animation: 1s ease-in-out both timer-item;
-                    $delay: #{($i - 0) * 1250};
+                    $delay: #{($i - 0) * 2000};
                     animation-delay: #{$delay}ms;
                     
                 }
@@ -917,22 +882,6 @@ $gray: #1c1e2a;
             background-position: center;
             background-repeat: no-repeat;
         }
-        &.dd {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            &:after {
-                display: none;
-            }
-            .question-text {
-                z-index: 999;
-                position: relative;
-            }
-        }
-        &.fadeout {
-            animation: .5s ease-in-out both fade-out;
-            animation-delay: .5s;
-        }
     }
     padding: 3vw;
     box-sizing: border-box;
@@ -944,11 +893,7 @@ $gray: #1c1e2a;
         z-index: 999;
     }
     &.current-player-answering {
-        background: #fff;
-        .question-text {
-            display: none;
-        }
-        
+        background: #138510;
     }
     &.host {
         .question-text {
@@ -1049,9 +994,8 @@ $gray: #1c1e2a;
 }
 
 .show-play {
-    position: fixed;
-    z-index: -1;
-
+    position: absolute;
+    z-index: 999;
 }
 .welcome-actions {
     display: flex;
@@ -1074,9 +1018,6 @@ $gray: #1c1e2a;
         }
         img {
             border-radius: 10px;
-            @media (max-width: $mobile) {
-                display: none;
-            }
         }
     }
 }
@@ -1089,50 +1030,30 @@ $gray: #1c1e2a;
         transform: sclae(1);
     }
 }
+@-moz-keyframes spin {
+    to { -moz-transform: rotate(360deg); }
+}
+@-webkit-keyframes spin {
+    to { -webkit-transform: rotate(360deg); }
+}
+@keyframes spin {
+    to {transform:rotate(360deg);}
+}
 @keyframes spin {
     0% {
-        transform:scale(.25,-1);
+        transform:rotate(0deg) scale(.25);
     }
     33% {
-        transform:scale(.5,1);
+        transform:rotate(360deg) scale(.5);
     }
     66% {
-        transform:scale(.75,-1);
+        transform:rotate(720deg) scale(.75);
     }
     100% {
-        transform:scale(1,1);
+        transform:rotate(1080deg) scale(1);
     }
 }
 
 .spin {
     animation: spin 2000ms linear;
-}
-.peril-commercial {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    object-fit: contain;
-    video {
-        width: 100%;
-        height: 100%;
-        position: relative;
-    }
-}
-.peril-commercial-bg {
-    background: #fff;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    object-fit: cover;
-    video {
-        width: 100%;
-        height: 100%;
-        position: relative;
-        object-fit: cover;
-        filter: blur(18px);
-    }
 }
